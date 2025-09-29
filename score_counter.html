@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>计分器</title>
+    <!-- 引入 Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 使用 Inter 字体 */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f9fb; /* 浅灰色背景 */
+        }
+        /* 自定义按钮样式 */
+        .score-btn {
+            /* 按钮宽度更宽，以适应两个按钮的布局 */
+            @apply p-4 text-white text-xl font-bold rounded-xl shadow-lg transition duration-150 ease-in-out transform hover:scale-[1.02] active:scale-95;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <!-- 主容器 -->
+    <div class="w-full max-w-4xl bg-white shadow-2xl rounded-3xl p-6 md:p-10 border border-gray-100">
+        
+        <h1 class="text-3xl md:text-4xl font-extrabold text-center text-gray-800 mb-8">
+            🏆 比赛计分器
+        </h1>
+
+        <!-- 计分卡片容器 (Flexbox for responsiveness) -->
+        <div class="flex flex-col md:flex-row gap-8 justify-between">
+            
+            <!-- 队伍 1 计分卡 -->
+            <div id="player1Card" class="bg-blue-50 border-2 border-blue-200 rounded-2xl p-6 flex-1 shadow-xl">
+                <input type="text" id="player1Name" value="队伍 A" class="w-full text-center text-2xl md:text-3xl font-semibold mb-4 bg-transparent border-b border-blue-300 focus:outline-none focus:border-blue-500 transition" />
+                <div id="player1Score" class="text-7xl md:text-9xl font-extrabold text-center mb-6 text-blue-600 transition duration-300 ease-in-out">0</div>
+
+                <!-- 控制按钮 (只有 +1 和 -1) -->
+                <div class="grid grid-cols-2 gap-4">
+                    <button onclick="changeScore(1, -1)" class="score-btn bg-red-500 hover:bg-red-600">
+                        -1
+                    </button>
+                    <button onclick="changeScore(1, 1)" class="score-btn bg-green-500 hover:bg-green-600">
+                        +1
+                    </button>
+                </div>
+            </div>
+
+            <!-- 分隔线 (只在桌面模式显示) -->
+            <div class="hidden md:flex items-center">
+                <div class="w-1 h-3/4 bg-gray-300 rounded-full"></div>
+            </div>
+
+            <!-- 队伍 2 计分卡 -->
+            <div id="player2Card" class="bg-red-50 border-2 border-red-200 rounded-2xl p-6 flex-1 shadow-xl">
+                <input type="text" id="player2Name" value="队伍 B" class="w-full text-center text-2xl md:text-3xl font-semibold mb-4 bg-transparent border-b border-red-300 focus:outline-none focus:border-red-500 transition" />
+                <div id="player2Score" class="text-7xl md:text-9xl font-extrabold text-center mb-6 text-red-600 transition duration-300 ease-in-out">0</div>
+                
+                <!-- 控制按钮 (只有 +1 和 -1) -->
+                <div class="grid grid-cols-2 gap-4">
+                    <button onclick="changeScore(2, -1)" class="score-btn bg-red-500 hover:bg-red-600">
+                        -1
+                    </button>
+                    <button onclick="changeScore(2, 1)" class="score-btn bg-green-500 hover:bg-green-600">
+                        +1
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 游戏控制区 -->
+        <div class="mt-8 pt-6 border-t border-gray-200 flex flex-col md:flex-row items-center justify-center gap-4">
+            <button onclick="resetGame()" class="py-3 px-8 text-lg font-semibold bg-yellow-500 text-white rounded-full shadow-lg hover:bg-yellow-600 transition duration-200 ease-in-out transform hover:scale-[1.05] active:scale-100">
+                🔄 重置游戏
+            </button>
+            <!-- 新增导出按钮 -->
+            <button onclick="exportLog()" class="py-3 px-8 text-lg font-semibold bg-indigo-500 text-white rounded-full shadow-lg hover:bg-indigo-600 transition duration-200 ease-in-out transform hover:scale-[1.05] active:scale-100">
+                📥 导出记录
+            </button>
+            
+            <!-- 分数日志区域 -->
+            <div id="logContainer" class="w-full max-w-2xl mt-4 p-4 bg-gray-100 rounded-xl shadow-inner">
+                <!-- Log entries will be inserted here by JavaScript -->
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- 状态变量 ---
+        let score1 = 0; // 队伍 A 的分数
+        let score2 = 0; // 队伍 B 的分数
+        let log1 = [];
+        let log2 = [];
+
+        // --- LocalStorage Keys for Persistence ---
+        const STORAGE_KEY_SCORE1 = 'scoreCounter_score1';
+        const STORAGE_KEY_SCORE2 = 'scoreCounter_score2';
+        const STORAGE_KEY_LOG1 = 'scoreCounter_log1';
+        const STORAGE_KEY_LOG2 = 'scoreCounter_log2';
+
+
+        /**
+         * 更新指定队伍的分数显示。
+         * @param {number} player - 队伍编号 (1 或 2)。
+         */
+        function updateScoreDisplay(player) {
+            const scoreElement = document.getElementById(`player${player}Score`);
+            const currentScore = player === 1 ? score1 : score2;
+            
+            // 更新分数文本
+            scoreElement.textContent = currentScore;
+
+            // 添加动画效果 (短暂放大/缩小)
+            scoreElement.classList.add('scale-105');
+            setTimeout(() => {
+                scoreElement.classList.remove('scale-105');
+            }, 150);
+        }
+
+        /**
+         * 更新得分记录列表。
+         */
+        function updateLogDisplay() {
+            const logContainer = document.getElementById('logContainer');
+            
+            // 确保名称是最新的，并在记录中添加队伍信息
+            const name1 = document.getElementById('player1Name').value;
+            const name2 = document.getElementById('player2Name').value;
+
+            // 合并并格式化两条日志，然后按时间降序排序（最新的在前）
+            const combinedLog = [
+                ...log1.map(item => ({ ...item, player: 1, name: name1, color: 'text-blue-600' })),
+                ...log2.map(item => ({ ...item, player: 2, name: name2, color: 'text-red-600' }))
+            ].sort((a, b) => {
+                // 简单的基于时间戳的排序
+                return a.timestamp - b.timestamp;
+            }).reverse(); // 倒序显示，最新在前
+            
+            // 只显示最近 15 条记录
+            const recentLog = combinedLog.slice(0, 15);
+
+            let logHtml = `<h2 class="text-xl font-bold text-gray-700 mb-4 text-center">最近 ${recentLog.length} 条得分记录</h2>`;
+            
+            if (recentLog.length === 0) {
+                logHtml += '<p class="text-gray-500 italic text-center">暂无记录。</p>';
+            } else {
+                logHtml += '<ul class="space-y-2">';
+                recentLog.forEach(entry => {
+                    const action = entry.amount > 0 ? '得分' : '扣分';
+                    const amountText = entry.amount > 0 ? `+${entry.amount}` : `${entry.amount}`;
+                    const colorClass = entry.amount > 0 ? 'text-green-600' : 'text-red-600';
+                    
+                    logHtml += `
+                        <li class="flex justify-between items-center p-3 bg-white rounded-lg shadow-sm border-l-4 ${entry.player === 1 ? 'border-blue-500' : 'border-red-500'}">
+                            <span class="text-sm font-medium text-gray-500 w-1/4 md:w-auto">${entry.time}</span>
+                            <span class="${entry.color} font-bold w-1/4 md:w-auto truncate">${entry.name}</span>
+                            <span class="${colorClass} font-semibold w-1/4 text-right">${action} ${amountText}</span>
+                            <!-- 更新：显示完整的比分 -->
+                            <span class="text-sm text-gray-700 w-1/4 text-right">比分: ${entry.scoreA} - ${entry.scoreB}</span>
+                        </li>
+                    `;
+                });
+                logHtml += '</ul>';
+            }
+
+            logContainer.innerHTML = logHtml;
+        }
+
+        /**
+         * 保存当前分数和日志到 localStorage。
+         */
+        function saveState() {
+            try {
+                localStorage.setItem(STORAGE_KEY_SCORE1, score1);
+                localStorage.setItem(STORAGE_KEY_SCORE2, score2);
+                // 日志数组需要先转换为 JSON 字符串才能保存
+                localStorage.setItem(STORAGE_KEY_LOG1, JSON.stringify(log1));
+                localStorage.setItem(STORAGE_KEY_LOG2, JSON.stringify(log2));
+            } catch (e) {
+                console.error("Failed to save state to localStorage:", e);
+            }
+        }
+
+        /**
+         * 从 localStorage 加载分数和日志。
+         */
+        function loadState() {
+            try {
+                const storedScore1 = localStorage.getItem(STORAGE_KEY_SCORE1);
+                const storedScore2 = localStorage.getItem(STORAGE_KEY_SCORE2);
+                const storedLog1 = localStorage.getItem(STORAGE_KEY_LOG1);
+                const storedLog2 = localStorage.getItem(STORAGE_KEY_LOG2);
+
+                if (storedScore1 !== null) {
+                    // 使用 parseInt 和 || 0 确保即使存储失败也是数字 0
+                    score1 = parseInt(storedScore1, 10) || 0;
+                }
+                if (storedScore2 !== null) {
+                    score2 = parseInt(storedScore2, 10) || 0;
+                }
+                if (storedLog1 !== null) {
+                    // 将 JSON 字符串解析回数组
+                    log1 = JSON.parse(storedLog1) || [];
+                }
+                if (storedLog2 !== null) {
+                    log2 = JSON.parse(storedLog2) || [];
+                }
+            } catch (e) {
+                console.error("Failed to load state from localStorage, resetting to default:", e);
+                // 加载失败时重置所有变量
+                score1 = 0;
+                score2 = 0;
+                log1 = [];
+                log2 = [];
+            }
+        }
+
+
+        /**
+         * 改变指定队伍的分数。
+         * @param {number} player - 队伍编号 (1 或 2)。
+         * @param {number} amount - 分数变化量 (可为正或负)。
+         */
+        function changeScore(player, amount) {
+            const now = new Date();
+            // 格式化时间为 HH:MM:SS
+            const timeString = now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            
+            if (player === 1) {
+                score1 += amount;
+                if (score1 < 0) score1 = 0; // 防止负分
+                // 更新日志结构：记录两队最终分数
+                log1.push({ time: timeString, amount: amount, scoreA: score1, scoreB: score2, timestamp: now.getTime() });
+            } else if (player === 2) {
+                score2 += amount;
+                if (score2 < 0) score2 = 0; // 防止负分
+                // 更新日志结构：记录两队最终分数
+                log2.push({ time: timeString, amount: amount, scoreA: score1, scoreB: score2, timestamp: now.getTime() });
+            }
+
+            updateScoreDisplay(player);
+            updateLogDisplay(); // 更新日志显示
+            saveState(); // 每次分数变动后保存状态
+        }
+
+        /**
+         * 导出所有分数记录为 纯文本 (TXT) 文件。
+         */
+        function exportLog() {
+            if (log1.length === 0 && log2.length === 0) {
+                showCustomMessage("没有可导出的记录。", "bg-yellow-100 border-yellow-500 text-yellow-700");
+                return;
+            }
+
+            const name1 = document.getElementById('player1Name').value;
+            const name2 = document.getElementById('player2Name').value;
+
+            // Combine and sort log entries by timestamp in ASCENDING order for chronological export
+            const combinedLog = [
+                ...log1.map(item => ({ ...item, player: 1, name: name1 })),
+                ...log2.map(item => ({ ...item, player: 2, name: name2 }))
+            ].sort((a, b) => a.timestamp - b.timestamp); 
+
+            // --- PLAIN TEXT EXPORT LOGIC ---
+            const now = new Date();
+            const fullDateStr = now.toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' });
+
+            // 定义列宽 (基于标准空格字符数，方便对齐)
+            const W_IDX = 5;
+            const W_TIME = 8;
+            const W_NAME = 12; // 增加宽度以适应中文和队名
+            const W_AMOUNT = 6;
+            const W_SCORE = 10;
+            const SEPARATOR = " | ";
+            
+            // 纯文本文件头
+            let textContent = `比赛得分记录 - ${fullDateStr}\n`;
+            textContent += `队伍 A: ${name1}\n队伍 B: ${name2}\n`;
+            textContent += "====================================================================\n\n";
+
+            // Header row: 使用 padEnd 实现左对齐
+            let header = "";
+            header += "序号".padEnd(W_IDX, ' ');
+            header += SEPARATOR;
+            header += "时间".padEnd(W_TIME, ' ');
+            header += SEPARATOR;
+            header += "队伍".padEnd(W_NAME, ' ');
+            header += SEPARATOR;
+            header += "变化量".padEnd(W_AMOUNT, ' ');
+            header += SEPARATOR;
+            header += "最终比分"; 
+            
+            textContent += header + "\n";
+            // 生成分隔线，确保长度与列宽匹配
+            const LINE_SEP = "-".repeat(W_IDX + SEPARATOR.length + W_TIME + SEPARATOR.length + W_NAME + SEPARATOR.length + W_AMOUNT + SEPARATOR.length + W_SCORE);
+            textContent += LINE_SEP + "\n";
+
+
+            // Map log entries to Plain Text rows
+            combinedLog.forEach((entry, index) => {
+                const amountText = entry.amount > 0 ? `+${entry.amount}` : `${entry.amount}`;
+                const scoreText = `${entry.scoreA} - ${entry.scoreB}`;
+                
+                // Data rows using String padding for alignment (padEnd实现左对齐)
+                let dataRow = "";
+                dataRow += String(index + 1).padEnd(W_IDX, ' ');
+                dataRow += SEPARATOR;
+                dataRow += entry.time.padEnd(W_TIME, ' ');
+                dataRow += SEPARATOR;
+                dataRow += entry.name.padEnd(W_NAME, ' '); 
+                dataRow += SEPARATOR;
+                dataRow += amountText.padEnd(W_AMOUNT, ' ');
+                dataRow += SEPARATOR;
+                dataRow += scoreText;
+
+                textContent += dataRow + "\n";
+            });
+            textContent += "\n====================================================================\n";
+
+            // Create a Blob and trigger download
+            const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            
+            link.setAttribute("href", url);
+            
+            // File name: ScoreLog-YYYYMMDD.txt
+            const dateStr = now.toISOString().slice(0, 10).replace(/-/g, '');
+            link.setAttribute("download", `ScoreLog-${dateStr}.txt`);
+            
+            // 隐藏链接并点击触发下载
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            showCustomMessage("记录已成功导出为 TXT 文件！", "bg-green-100 border-green-500 text-green-700");
+        }
+
+        /**
+         * 重置所有分数、日志和名称。
+         */
+        function resetGame() {
+            score1 = 0;
+            score2 = 0;
+            log1 = []; // 清空日志
+            log2 = []; // 清空日志
+
+            // 清除 localStorage 中的数据，实现彻底重置
+            localStorage.removeItem(STORAGE_KEY_SCORE1);
+            localStorage.removeItem(STORAGE_KEY_SCORE2);
+            localStorage.removeItem(STORAGE_KEY_LOG1);
+            localStorage.removeItem(STORAGE_KEY_LOG2);
+
+            updateScoreDisplay(1);
+            updateScoreDisplay(2);
+            updateLogDisplay(); // 更新日志视图
+            
+            // 重置名称
+            document.getElementById('player1Name').value = '队伍 A';
+            document.getElementById('player2Name').value = '队伍 B';
+
+            // 弹出提示框 (使用自定义的简单提示代替alert)
+            showCustomMessage("游戏已重置！", "bg-yellow-100 border-yellow-500 text-yellow-700");
+        }
+
+        /**
+         * 显示一个自定义的短暂提示信息，代替 alert()。
+         * @param {string} message - 要显示的消息。
+         * @param {string} tailwindClasses - 提示框的 Tailwind 样式类。
+         */
+        function showCustomMessage(message, tailwindClasses) {
+            let messageBox = document.getElementById('customMessageBox');
+            if (!messageBox) {
+                messageBox = document.createElement('div');
+                messageBox.id = 'customMessageBox';
+                messageBox.className = 'fixed top-4 left-1/2 transform -translate-x-1/2 z-50 p-4 rounded-xl shadow-2xl transition-opacity duration-300 opacity-0';
+                document.body.appendChild(messageBox);
+            }
+
+            messageBox.className = `fixed top-4 left-1/2 transform -translate-x-1/2 z-50 p-4 rounded-xl shadow-2xl transition-opacity duration-300 ${tailwindClasses}`;
+            messageBox.textContent = message;
+            
+            // 立即显示
+            messageBox.classList.remove('opacity-0');
+            messageBox.classList.add('opacity-100');
+
+            // 3秒后隐藏
+            setTimeout(() => {
+                messageBox.classList.remove('opacity-100');
+                messageBox.classList.add('opacity-0');
+            }, 3000);
+        }
+
+        // 页面加载时初始化显示
+        window.onload = function() {
+            loadState(); // 1. 加载上次保存的状态
+            updateScoreDisplay(1); // 2. 更新分数显示
+            updateScoreDisplay(2);
+            updateLogDisplay(); // 3. 更新日志区域
+        };
+    </script>
+</body>
+</html>
