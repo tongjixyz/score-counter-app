@@ -10,11 +10,25 @@
         /* Chosen Palette: Warm Neutrals & Primary Accents (Blue, Red, Green, Yellow) */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
         
+        /* --- 核心移动端优化：禁用双击缩放和文本选择 --- */
         body {
             font-family: 'Inter', sans-serif;
             background-color: #f7f9fb; /* 浅灰色背景 */
+            /* 防止快速点击导致屏幕放大 */
+            touch-action: manipulation; 
+            /* 防止快速点击选中文字 */
+            -webkit-user-select: none; /* iOS/Safari */
+            user-select: none;
+            /* 移除点击时的半透明灰色高亮 */
+            -webkit-tap-highlight-color: transparent; 
         }
         
+        /* 确保计分按钮也继承这个重要的触控属性 */
+        .score-control-btn {
+            touch-action: manipulation;
+        }
+        /* ------------------------------------------- */
+
         /* 获胜动画：胜利光芒 */
         @keyframes winner-glow {
             0%, 100% { box-shadow: 0 0 10px rgba(34, 197, 94, 0.5), 0 0 20px rgba(34, 197, 94, 0.3); } 
@@ -92,10 +106,10 @@
                 <!-- 控制按钮 (+1 和 -1) -->
                 <!-- 优化：加大按钮尺寸和文字，提高移动端点击成功率 -->
                 <div class="grid grid-cols-2 gap-4">
-                    <button onclick="changeScore(1, -1)" class="py-6 text-3xl font-bold rounded-2xl shadow-xl bg-red-500 text-white hover:bg-red-600 transition duration-150 ease-in-out transform hover:scale-[1.02] active:scale-95 touch-effect">
+                    <button onclick="changeScore(1, -1)" class="score-control-btn py-6 text-3xl font-bold rounded-2xl shadow-xl bg-red-500 text-white hover:bg-red-600 transition duration-150 ease-in-out transform hover:scale-[1.02] active:scale-95 touch-effect">
                         -1
                     </button>
-                    <button onclick="changeScore(1, 1)" class="py-6 text-3xl font-bold rounded-2xl shadow-xl bg-green-500 text-white hover:bg-green-600 transition duration-150 ease-in-out transform hover:scale-[1.02] active:scale-95 touch-effect">
+                    <button onclick="changeScore(1, 1)" class="score-control-btn py-6 text-3xl font-bold rounded-2xl shadow-xl bg-green-500 text-white hover:bg-green-600 transition duration-150 ease-in-out transform hover:scale-[1.02] active:scale-95 touch-effect">
                         +1
                     </button>
                 </div>
@@ -116,10 +130,10 @@
                 <!-- 控制按钮 (+1 和 -1) -->
                 <!-- 优化：加大按钮尺寸和文字，提高移动端点击成功率 -->
                 <div class="grid grid-cols-2 gap-4">
-                    <button onclick="changeScore(2, -1)" class="py-6 text-3xl font-bold rounded-2xl shadow-xl bg-red-500 text-white hover:bg-red-600 transition duration-150 ease-in-out transform hover:scale-[1.02] active:scale-95 touch-effect">
+                    <button onclick="changeScore(2, -1)" class="score-control-btn py-6 text-3xl font-bold rounded-2xl shadow-xl bg-red-500 text-white hover:bg-red-600 transition duration-150 ease-in-out transform hover:scale-[1.02] active:scale-95 touch-effect">
                         -1
                     </button>
-                    <button onclick="changeScore(2, 1)" class="py-6 text-3xl font-bold rounded-2xl shadow-xl bg-green-500 text-white hover:bg-green-600 transition duration-150 ease-in-out transform hover:scale-[1.02] active:scale-95 touch-effect">
+                    <button onclick="changeScore(2, 1)" class="score-control-btn py-6 text-3xl font-bold rounded-2xl shadow-xl bg-green-500 text-white hover:bg-green-600 transition duration-150 ease-in-out transform hover:scale-[1.02] active:scale-95 touch-effect">
                         +1
                     </button>
                 </div>
@@ -892,7 +906,7 @@
             
             // 格式化日期
             const dateFormatOptions = { year: 'numeric', month: '2-digit', day: '2-digit' };
-            const startDateStr = startTime ? new Date(startTime).toLocaleDateString('zh-CN', dateFormatOptions) : 'N/A';
+            const startDateStr = startTime ? new Date(startTime).toLocaleDateString('zh-CN', dateFormatOptions) : 'N/A (无记录)';
             const endDateStr = new Date(nowTime).toLocaleDateString('zh-CN', dateFormatOptions);
 
             let titleDateRange = endDateStr;
