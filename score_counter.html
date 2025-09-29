@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>互动计分器</title>
-    <!-- 引入 Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* Chosen Palette: Warm Neutrals & Primary Accents (Blue, Red, Green, Yellow) */
@@ -70,17 +69,13 @@
 </head>
 <body class="min-h-screen flex items-center justify-center p-4">
 
-    <!-- 主容器 -->
     <div id="mainContainer" class="w-full max-w-4xl bg-white shadow-2xl rounded-3xl p-6 md:p-10 border border-gray-100">
         
-        <!-- 标题及设置按钮容器 -->
         <div class="relative w-full mb-4">
             <h1 class="text-3xl md:text-4xl font-extrabold text-center text-gray-800">
                 🏆 比赛计分器
             </h1>
-            <!-- Settings Icon -->
             <button onclick="openSettingsModal()" class="absolute top-1/2 -translate-y-1/2 right-0 p-2 text-gray-500 hover:text-indigo-600 transition duration-150 rounded-full hover:bg-gray-100 focus:outline-none">
-                <!-- Gear SVG Icon -->
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.5.344.978.535 1.455.578a1.724 1.724 0 001.065-2.572z" />
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -88,23 +83,15 @@
             </button>
         </div>
         
-        <!-- NEW: 主界面赛点设置显示区 -->
         <div id="mainSettingsDisplay" class="w-full max-w-4xl text-center p-3 mb-8 bg-gray-100 rounded-xl border border-gray-200 shadow-inner">
-            <!-- Content will be injected here by JS: updateMainSettingsDisplay() -->
-        </div>
+            </div>
 
-        <!-- 计分卡片容器 (Flexbox for responsiveness) -->
         <div class="flex flex-col md:flex-row gap-8 justify-between">
             
-            <!-- 队伍 1 计分卡 -->
             <div id="player1Card" class="relative bg-blue-50 border-2 border-blue-200 rounded-2xl p-6 flex-1 shadow-xl">
-                <!-- 队名输入框 -->
-                <input type="text" id="player1Name" value="队伍 A" class="w-full text-center text-2xl md:text-3xl font-semibold mb-4 bg-transparent border-b border-blue-300 focus:outline-none focus:border-blue-500 transition" />
-                <!-- 分数显示 -->
+                <input type="text" id="player1Name" value="队伍 A" onchange="saveState(); updateLogDisplay();" class="w-full text-center text-2xl md:text-3xl font-semibold mb-4 bg-transparent border-b border-blue-300 focus:outline-none focus:border-blue-500 transition" />
                 <div id="player1Score" class="text-7xl md:text-9xl font-extrabold text-center mb-6 text-blue-600 transition duration-300 ease-in-out">0</div>
 
-                <!-- 控制按钮 (+1 和 -1) -->
-                <!-- 优化：加大按钮尺寸和文字，提高移动端点击成功率 -->
                 <div class="grid grid-cols-2 gap-4">
                     <button onclick="changeScore(1, -1)" class="score-control-btn py-6 text-3xl font-bold rounded-2xl shadow-xl bg-red-500 text-white hover:bg-red-600 transition duration-150 ease-in-out transform hover:scale-[1.02] active:scale-95 touch-effect">
                         -1
@@ -115,20 +102,14 @@
                 </div>
             </div>
 
-            <!-- 分隔线 (只在桌面模式显示) -->
             <div class="hidden md:flex items-center">
                 <div class="w-1 h-3/4 bg-gray-300 rounded-full"></div>
             </div>
 
-            <!-- 队伍 2 计分卡 -->
             <div id="player2Card" class="relative bg-red-50 border-2 border-red-200 rounded-2xl p-6 flex-1 shadow-xl">
-                <!-- 队名输入框 -->
-                <input type="text" id="player2Name" value="队伍 B" class="w-full text-center text-2xl md:text-3xl font-semibold mb-4 bg-transparent border-b border-red-300 focus:outline-none focus:border-red-500 transition" />
-                <!-- 分数显示 -->
+                <input type="text" id="player2Name" value="队伍 B" onchange="saveState(); updateLogDisplay();" class="w-full text-center text-2xl md:text-3xl font-semibold mb-4 bg-transparent border-b border-red-300 focus:outline-none focus:border-red-500 transition" />
                 <div id="player2Score" class="text-7xl md:text-9xl font-extrabold text-center mb-6 text-red-600 transition duration-300 ease-in-out">0</div>
                 
-                <!-- 控制按钮 (+1 和 -1) -->
-                <!-- 优化：加大按钮尺寸和文字，提高移动端点击成功率 -->
                 <div class="grid grid-cols-2 gap-4">
                     <button onclick="changeScore(2, -1)" class="score-control-btn py-6 text-3xl font-bold rounded-2xl shadow-xl bg-red-500 text-white hover:bg-red-600 transition duration-150 ease-in-out transform hover:scale-[1.02] active:scale-95 touch-effect">
                         -1
@@ -140,51 +121,37 @@
             </div>
         </div>
 
-        <!-- 游戏控制区 -->
         <div class="mt-8 pt-6 border-t border-gray-200 flex flex-col items-center gap-4">
             
-            <!-- 主要控制按钮：开始/重置 | 暂停/继续 | 导出 -->
-            <!-- 移动端 (默认) 为 grid-cols-2。PC端 (sm:及以上) 为 grid-cols-3 -->
             <div class="grid grid-cols-2 sm:grid-cols-3 w-full max-w-4xl gap-4"> 
-                <!-- 1. 开始/重置 -->
                 <button onclick="resetGame()" class="py-3 px-4 text-sm sm:text-lg font-semibold bg-yellow-500 text-white rounded-xl shadow-lg hover:bg-yellow-600 transition duration-200 ease-in-out">
                     🔄 开始/重置
                 </button>
 
-                <!-- 2. 暂停/继续计时 -->
                 <button id="pauseResumeButton" onclick="togglePause()" class="py-3 px-4 text-sm sm:text-lg font-semibold bg-blue-500 text-white rounded-xl shadow-lg hover:bg-blue-600 transition duration-200 ease-in-out">
                     ⏸ 暂停计时
                 </button>
 
-                <!-- 3. 导出 (在移动端 col-span-2 以实现居中；在 PC 端 sm:col-span-1 恢复单列) -->
                 <button onclick="exportToTxt()" class="col-span-2 sm:col-span-1 py-3 px-4 text-sm sm:text-lg font-semibold bg-indigo-500 text-white rounded-xl shadow-lg hover:bg-indigo-600 transition duration-200 ease-in-out">
                     📥 导出记录 (TXT)
                 </button>
             </div>
             
-            <!-- 撤销和计时器显示区 -->
             <div class="flex w-full max-w-lg items-center justify-center gap-4 mt-2">
-                <!-- 撤销按钮 -->
                 <button id="undoButton" onclick="undoLastAction()" class="py-2 px-4 text-sm font-semibold bg-red-400 text-white rounded-xl shadow-md hover:bg-red-500 transition duration-150">
                     ↩ 撤销
                 </button>
                 
                 <div id="timerDisplay" class="text-lg font-medium text-gray-700 flex-1 text-center">
-                    <!-- 计时器信息将在这里实时显示 -->
-                </div>
+                    </div>
             </div>
 
-            <!-- 分数日志区域 -->
             <div id="logContainer" class="w-full max-w-4xl p-4 bg-gray-100 rounded-xl shadow-inner mt-4">
-                <!-- Log entries will be inserted here by JavaScript -->
-            </div>
+                </div>
         </div>
     </div>
 
-    <!-- Settings Modal Overlay -->
     <div id="settingsModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 z-50 flex items-center justify-center transition-opacity duration-300">
-        <!-- Modal Content -->
-        <!-- 使用 scale-95 开始，然后通过 JS 移除以实现过渡效果 -->
         <div class="bg-white rounded-2xl p-6 md:p-8 w-11/12 max-w-md shadow-2xl transform scale-95 transition-transform duration-300">
             <div class="flex justify-between items-center border-b pb-3 mb-4">
                 <h2 class="text-2xl font-bold text-gray-800">⚙️ 比赛设置</h2>
@@ -195,32 +162,23 @@
                 </button>
             </div>
             
-            <!-- Settings Switches Content -->
             <div id="gameControlSwitches" class="w-full flex flex-col gap-6 p-2">
                 
-                <!-- NEW: 是否设置赛点 (主开关，开启后才判断胜负) -->
                 <div class="flex items-center justify-between gap-4 p-2 bg-indigo-50 rounded-xl border border-indigo-200">
                     <label for="toggleMatchPointMode" class="text-lg font-bold text-gray-800 whitespace-nowrap">是否设置赛点 (启用胜负判定):</label>
-                    <!-- CHANGED: 默认不开启赛点模式 (checked=false) -->
-                    <input type="checkbox" id="toggleMatchPointMode" class="toggle-switch" onchange="checkGameStatus(); updateSettingsVisibility(); updateMainSettingsDisplay();">
+                    <input type="checkbox" id="toggleMatchPointMode" class="toggle-switch" onchange="checkGameStatus(); updateSettingsVisibility(); updateMainSettingsDisplay(); saveState();">
                 </div>
 
-                <!-- Container for Match Point Specific Settings (Visibility controlled by toggleMatchPointMode) -->
-                <!-- 使用 hidden 类名确保初始隐藏，JS 会在 onload 时覆盖 -->
                 <div id="matchPointSettingsContainer" class="flex flex-col gap-4 pl-4 border-l-4 border-gray-200 hidden">
                     
-                    <!-- 赛点设置 (抢几分) -->
                     <div class="flex items-center justify-between gap-4 p-2 bg-white border border-gray-200 rounded-xl shadow-sm">
                         <label for="targetScoreInput" class="text-lg font-semibold text-gray-700 whitespace-nowrap">赛点 (抢几分):</label>
-                        <!-- 默认值 13 -->
-                        <input type="number" id="targetScoreInput" value="13" min="1" onchange="checkGameStatus(); updateMainSettingsDisplay();" class="w-20 p-2 text-center border-2 border-gray-300 rounded-lg focus:border-indigo-500 transition"/>
+                        <input type="number" id="targetScoreInput" value="13" min="1" onchange="checkGameStatus(); updateMainSettingsDisplay(); saveState();" class="w-20 p-2 text-center border-2 border-gray-300 rounded-lg focus:border-indigo-500 transition"/>
                     </div>
 
-                    <!-- 启用两分制开关 -->
                     <div class="flex items-center justify-between gap-4 p-2 bg-white border border-gray-200 rounded-xl shadow-sm">
                         <label for="toggleMatchPoint" class="text-lg font-semibold text-gray-700 whitespace-nowrap">启用两分制获胜:</label>
-                        <!-- 使用自定义开关样式 -->
-                        <input type="checkbox" id="toggleMatchPoint" checked class="toggle-switch" onchange="checkGameStatus(); updateMainSettingsDisplay();">
+                        <input type="checkbox" id="toggleMatchPoint" checked class="toggle-switch" onchange="checkGameStatus(); updateMainSettingsDisplay(); saveState();">
                     </div>
 
                 </div>
@@ -234,7 +192,6 @@
         </div>
     </div>
     
-    <!-- JavaScript Logic -->
     <script>
         // --- 核心状态变量 ---
         let score1 = 0; // 队伍 A 的分数
@@ -253,7 +210,102 @@
         
         let audioContext = null; // Web Audio API Context
 
+        // --- LOCAL STORAGE KEY ---
+        const LOCAL_STORAGE_KEY = 'interactiveScoreCounterState';
         
+        // --- NEW: 数据持久化函数 ---
+        function saveState() {
+            const state = {
+                score1,
+                score2,
+                log1,
+                log2,
+                name1: document.getElementById('player1Name').value,
+                name2: document.getElementById('player2Name').value,
+                isGameOver,
+                startTime,
+                cumulativePausedDuration,
+                isPaused,
+                pausedAt,
+                // 保存设置
+                targetScore: document.getElementById('targetScoreInput').value,
+                matchPointEnabled: document.getElementById('toggleMatchPoint').checked,
+                matchPointMode: document.getElementById('toggleMatchPointMode').checked,
+            };
+            try {
+                localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(state));
+            } catch (e) {
+                console.error("Error saving to localStorage:", e);
+            }
+        }
+        
+        function loadState() {
+            try {
+                const stateString = localStorage.getItem(LOCAL_STORAGE_KEY);
+                if (stateString) {
+                    const state = JSON.parse(stateString);
+                    
+                    // 核心状态变量
+                    score1 = state.score1 ?? 0;
+                    score2 = state.score2 ?? 0;
+                    log1 = state.log1 ?? [];
+                    log2 = state.log2 ?? [];
+                    name1 = state.name1 ?? "队伍 A";
+                    name2 = state.name2 ?? "队伍 B";
+                    isGameOver = state.isGameOver ?? false;
+                    
+                    // 计时器状态
+                    startTime = state.startTime ?? null;
+                    cumulativePausedDuration = state.cumulativePausedDuration ?? 0;
+                    isPaused = state.isPaused ?? false;
+                    pausedAt = state.pausedAt ?? null; // 暂停时间点，用于恢复计算
+                    
+                    // UI & 设置
+                    document.getElementById('player1Name').value = name1;
+                    document.getElementById('player2Name').value = name2;
+                    
+                    const targetScoreInput = document.getElementById('targetScoreInput');
+                    const toggleMatchPoint = document.getElementById('toggleMatchPoint');
+                    const toggleMatchPointMode = document.getElementById('toggleMatchPointMode');
+
+                    if (targetScoreInput) targetScoreInput.value = state.targetScore ?? 13;
+                    if (toggleMatchPoint) toggleMatchPoint.checked = state.matchPointEnabled ?? true;
+                    if (toggleMatchPointMode) toggleMatchPointMode.checked = state.matchPointMode ?? false;
+
+                    // 恢复显示
+                    updateScoreDisplay(1);
+                    updateScoreDisplay(2);
+                    updateLogDisplay();
+                    updateSettingsVisibility();
+                    
+                    // 恢复计时器运行状态 (如果需要)
+                    if (startTime !== null) {
+                        if (!isPaused && !isGameOver) {
+                            startTimer();
+                        } else {
+                            // 确保暂停/结束状态的显示是正确的
+                            updateTimerDisplay(); 
+                            if (isPaused) {
+                                const pauseButton = document.getElementById('pauseResumeButton');
+                                pauseButton.textContent = "▶ 继续计时";
+                                pauseButton.classList.remove('bg-blue-500', 'hover:bg-blue-600');
+                                pauseButton.classList.add('bg-green-600', 'hover:bg-green-700');
+                            }
+                        }
+                    }
+                    
+                    // 恢复获胜高亮和赛点提示
+                    checkGameStatus();
+                    
+                    showCustomMessage("游戏状态已从本地存储加载。", "bg-indigo-100 border-indigo-500 text-indigo-700");
+                    return true;
+                }
+            } catch (e) {
+                console.error("Error loading state from localStorage:", e);
+            }
+            return false;
+        }
+
         /**
          * 重置本地状态变量和 UI。
          */
@@ -283,6 +335,9 @@
             document.getElementById('toggleMatchPoint').checked = true; // 两分制默认开启
             // CHANGED: 赛点模式默认关闭 (false)
             document.getElementById('toggleMatchPointMode').checked = false; // 赛点模式默认关闭
+            
+            saveState(); // *** 保存重置后的状态 ***
+            
             updateSettingsVisibility(); // 重置后更新可见性
             updateMainSettingsDisplay(); // NEW: 重置后更新主界面显示
             // --------------------------
@@ -436,6 +491,7 @@
                 updateTimerDisplay(); // Update display immediately to reflect 'Paused' status
                 showCustomMessage("计时已暂停。", "bg-yellow-100 border-yellow-500 text-yellow-700");
             }
+            saveState(); // *** 保存计时状态 ***
         }
 
         /**
@@ -556,7 +612,8 @@
                 startTimer();
             } else if (isPaused) {
                 // 如果在暂停状态下计分，自动解除暂停并继续计时
-                togglePause();
+                togglePause(); // togglePause 会处理计时器的恢复和 saveState
+                // 注意：由于 togglePause 内部调用了 saveState，这里不需要重复调用
             }
             
             name1 = document.getElementById('player1Name').value;
@@ -580,6 +637,9 @@
             
             // 检查游戏状态
             checkGameStatus();
+            
+            // 如果 togglePause 没有被调用，这里手动保存状态
+            if (!isPaused) saveState();
         }
         
         /**
@@ -641,6 +701,7 @@
                 }
 
                 updateLogDisplay();
+                saveState(); // *** 撤销后保存状态 ***
             } else {
                 showCustomMessage("撤销失败：未找到匹配的日志条目。", "bg-red-100 border-red-500 text-red-700");
             }
@@ -660,6 +721,7 @@
                     settingsContainer.classList.add('hidden');
                 }
             }
+            // 不需要 saveState，因为 onchange 事件已经处理
         }
 
         /**
@@ -792,6 +854,7 @@
             }
             
             updateMainSettingsDisplay(); // NEW: 每次检查状态后都更新主界面显示 (包括比赛是否结束)
+            saveState(); // *** 检查状态后保存状态 (特别是 isGameOver) ***
         }
 
         /**
@@ -809,6 +872,7 @@
             
             showCustomMessage(`🎉 恭喜 ${winningName} 赢得比赛! 最终比分 ${score1} - ${score2}`, "bg-green-100 border-green-700 text-green-800");
             updateTimerDisplay(); // 更新显示为 '已结束'
+            saveState(); // *** 获胜后保存状态 ***
         }
 
         /**
@@ -837,6 +901,7 @@
             if (!isDeucePoint || score1 === score2 + 1 || score2 === score1 + 1) {
                 showCustomMessage(`🔥 ${playerName} 达到赛点！`, "bg-red-100 border-red-500 text-red-700");
             }
+            // 不需要 saveState，因为 checkGameStatus 已在得分后调用
         }
 
         /**
@@ -851,6 +916,7 @@
                 modal.querySelector('.bg-white').classList.remove('scale-95');
                 modal.classList.add('opacity-100');
             }, 10);
+            // openSettingsModal 不改变状态，不需要 saveState
         }
 
         /**
@@ -868,6 +934,7 @@
             // NEW: 关闭设置后，重新检查游戏状态并更新主界面显示
             checkGameStatus();
             updateMainSettingsDisplay();
+            // 在设置项的 onchange 事件中已调用 saveState()，这里不再重复
         }
 
 
@@ -1006,7 +1073,7 @@
             showCustomMessage("记录已成功导出为 TXT 文件！", "bg-green-100 border-green-500 text-green-700");
             
             // 如果导出前计时是运行的，则继续计时
-            if(wasRunning) togglePause();
+            if(wasRunning) togglePause(); // togglePause 会重新调用 saveState
         }
 
 
@@ -1014,7 +1081,7 @@
          * 重置所有分数、日志和名称。
          */
         function resetGame() {
-            resetLocalState(); // 只重置本地状态
+            resetLocalState(); // 只重置本地状态，resetLocalState 内部会调用 saveState
         }
         
         /**
@@ -1044,10 +1111,15 @@
 
         // 页面加载时初始化
         window.onload = function() {
-            resetLocalState();
-            // 在加载时更新可见性，确保初始状态正确
-            updateSettingsVisibility(); 
-            updateMainSettingsDisplay(); // NEW: 确保主界面设置信息在加载时显示
+            // 尝试加载状态，如果失败则执行默认重置
+            const stateLoaded = loadState(); 
+            if (!stateLoaded) {
+                resetLocalState();
+            } else {
+                // 如果成功加载状态，也需要确保 UI 状态和计时器是正确的
+                updateSettingsVisibility(); 
+                updateMainSettingsDisplay(); 
+            }
         };
 
         // 将函数挂载到 window 对象上
@@ -1056,11 +1128,12 @@
         window.togglePause = togglePause;
         window.exportToTxt = exportToTxt; 
         window.undoLastAction = undoLastAction;
-        window.checkGameStatus = checkGameStatus; // 暴露 checkGameStatus 以供 onchange 调用
+        window.checkGameStatus = checkGameStatus; 
         window.openSettingsModal = openSettingsModal;
         window.closeSettingsModal = closeSettingsModal;
-        window.updateSettingsVisibility = updateSettingsVisibility; // 暴露新的可见性函数
-        window.updateMainSettingsDisplay = updateMainSettingsDisplay; // 暴露新的主界面显示函数
+        window.updateSettingsVisibility = updateSettingsVisibility; 
+        window.updateMainSettingsDisplay = updateMainSettingsDisplay;
+        window.saveState = saveState; // 暴露 saveState 供 name input onchange 使用
     </script>
 </body>
 </html>
