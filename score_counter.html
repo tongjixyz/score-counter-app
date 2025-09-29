@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>计分器</title>
+    <title>互动计分器</title>
     <!-- 引入 Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* 使用 Inter 字体 */
+        /* Chosen Palette: Warm Neutrals & Primary Accents (Blue, Red, Green, Yellow) */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
         
         body {
@@ -19,28 +19,77 @@
             /* 按钮宽度更宽，以适应两个按钮的布局 */
             @apply p-4 text-white text-xl font-bold rounded-xl shadow-lg transition duration-150 ease-in-out transform hover:scale-[1.02] active:scale-95;
         }
+
+        /* 获胜动画：胜利光芒 */
+        @keyframes winner-glow {
+            0%, 100% { box-shadow: 0 0 10px rgba(34, 197, 94, 0.5), 0 0 20px rgba(34, 197, 94, 0.3); } 
+            50% { box-shadow: 0 0 20px rgba(34, 197, 94, 0.8), 0 0 40px rgba(34, 197, 94, 0.6); } 
+        }
+        
+        .winner-card {
+            animation: winner-glow 1.5s infinite alternate;
+            /* 确保边框颜色在获胜时也更显眼 */
+            border-color: #22c55e !important; /* green-600 */
+        }
+
+        /* 赛点提示 (Game Point/Match Point) */
+        .match-point-text {
+            /* 将赛点提示定位到卡片右上角 */
+            @apply absolute top-0 right-0 m-2 px-3 py-1 bg-red-500 text-sm font-bold text-white rounded-full shadow-lg transform rotate-3;
+        }
+        
+        /* 自定义开关样式 */
+        .toggle-switch {
+            @apply appearance-none w-10 h-5 bg-gray-300 rounded-full cursor-pointer transition-colors duration-200 relative;
+        }
+        .toggle-switch:checked {
+            @apply bg-indigo-500;
+        }
+        .toggle-switch::before {
+            content: '';
+            @apply absolute left-0.5 top-0.5 w-4 h-4 bg-white rounded-full transition-transform duration-200 shadow;
+        }
+        .toggle-switch:checked::before {
+            transform: translateX(100%);
+        }
     </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-4">
 
     <!-- 主容器 -->
-    <div class="w-full max-w-4xl bg-white shadow-2xl rounded-3xl p-6 md:p-10 border border-gray-100">
+    <div id="mainContainer" class="w-full max-w-4xl bg-white shadow-2xl rounded-3xl p-6 md:p-10 border border-gray-100">
         
-        <h1 class="3xl md:text-4xl font-extrabold text-center text-gray-800 mb-8">
-            🏆 比赛计分器
-        </h1>
+        <!-- 标题及设置按钮容器 -->
+        <div class="relative w-full mb-4">
+            <h1 class="text-3xl md:text-4xl font-extrabold text-center text-gray-800">
+                🏆 比赛计分器
+            </h1>
+            <!-- Settings Icon -->
+            <button onclick="openSettingsModal()" class="absolute top-1/2 -translate-y-1/2 right-0 p-2 text-gray-500 hover:text-indigo-600 transition duration-150 rounded-full hover:bg-gray-100 focus:outline-none">
+                <!-- Gear SVG Icon -->
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.5.344.978.535 1.455.578a1.724 1.724 0 001.065-2.572z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+            </button>
+        </div>
+        
+        <!-- NEW: 主界面赛点设置显示区 -->
+        <div id="mainSettingsDisplay" class="w-full max-w-4xl text-center p-3 mb-8 bg-gray-100 rounded-xl border border-gray-200 shadow-inner">
+            <!-- Content will be injected here by JS: updateMainSettingsDisplay() -->
+        </div>
 
         <!-- 计分卡片容器 (Flexbox for responsiveness) -->
         <div class="flex flex-col md:flex-row gap-8 justify-between">
             
             <!-- 队伍 1 计分卡 -->
-            <div id="player1Card" class="bg-blue-50 border-2 border-blue-200 rounded-2xl p-6 flex-1 shadow-xl">
+            <div id="player1Card" class="relative bg-blue-50 border-2 border-blue-200 rounded-2xl p-6 flex-1 shadow-xl">
                 <!-- 队名输入框 -->
                 <input type="text" id="player1Name" value="队伍 A" class="w-full text-center text-2xl md:text-3xl font-semibold mb-4 bg-transparent border-b border-blue-300 focus:outline-none focus:border-blue-500 transition" />
                 <!-- 分数显示 -->
                 <div id="player1Score" class="text-7xl md:text-9xl font-extrabold text-center mb-6 text-blue-600 transition duration-300 ease-in-out">0</div>
 
-                <!-- 控制按钮 (只有 +1 和 -1) -->
+                <!-- 控制按钮 (+1 和 -1) -->
                 <div class="grid grid-cols-2 gap-4">
                     <button onclick="changeScore(1, -1)" class="score-btn bg-red-500 hover:bg-red-600">
                         -1
@@ -57,13 +106,13 @@
             </div>
 
             <!-- 队伍 2 计分卡 -->
-            <div id="player2Card" class="bg-red-50 border-2 border-red-200 rounded-2xl p-6 flex-1 shadow-xl">
+            <div id="player2Card" class="relative bg-red-50 border-2 border-red-200 rounded-2xl p-6 flex-1 shadow-xl">
                 <!-- 队名输入框 -->
                 <input type="text" id="player2Name" value="队伍 B" class="w-full text-center text-2xl md:text-3xl font-semibold mb-4 bg-transparent border-b border-red-300 focus:outline-none focus:border-red-500 transition" />
                 <!-- 分数显示 -->
                 <div id="player2Score" class="text-7xl md:text-9xl font-extrabold text-center mb-6 text-red-600 transition duration-300 ease-in-out">0</div>
                 
-                <!-- 控制按钮 (只有 +1 和 -1) -->
+                <!-- 控制按钮 (+1 和 -1) -->
                 <div class="grid grid-cols-2 gap-4">
                     <button onclick="changeScore(2, -1)" class="score-btn bg-red-500 hover:bg-red-600">
                         -1
@@ -76,57 +125,196 @@
         </div>
 
         <!-- 游戏控制区 -->
-        <!-- 核心容器改为 flex-col，确保按钮组、计时器、日志垂直堆叠 -->
-        <div class="mt-8 pt-6 border-t border-gray-200 flex flex-col items-center gap-6">
+        <div class="mt-8 pt-6 border-t border-gray-200 flex flex-col items-center gap-4">
             
-            <!-- 按钮容器：强制横向排布 (flex)，全宽 (w-full)，且最大宽度限制为 md，确保美观 -->
-            <div class="flex w-full max-w-md gap-4"> 
-                <!-- 开始/重置 按钮 (flex-1 确保等宽) -->
-                <button onclick="resetGame()" class="flex-1 py-4 px-6 text-lg font-semibold bg-yellow-500 text-white rounded-3xl shadow-lg hover:bg-yellow-600 transition duration-200 ease-in-out transform hover:scale-[1.05] active:scale-100">
+            <!-- 主要控制按钮：开始/重置 | 暂停/继续 | 导出 -->
+            <div class="grid grid-cols-2 sm:grid-cols-3 w-full max-w-4xl gap-4"> 
+                <!-- 开始/重置 -->
+                <button onclick="resetGame()" class="py-3 px-4 text-sm sm:text-lg font-semibold bg-yellow-500 text-white rounded-xl shadow-lg hover:bg-yellow-600 transition duration-200 ease-in-out">
                     🔄 开始/重置
                 </button>
 
-                <!-- 导出按钮 (flex-1 确保等宽) -->
-                <button onclick="exportLog()" class="flex-1 py-4 px-6 text-lg font-semibold bg-indigo-500 text-white rounded-3xl shadow-lg hover:bg-indigo-600 transition duration-200 ease-in-out transform hover:scale-[1.05] active:scale-100">
-                    📥 导出记录
+                <!-- 暂停/继续计时 -->
+                <button id="pauseResumeButton" onclick="togglePause()" class="py-3 px-4 text-sm sm:text-lg font-semibold bg-blue-500 text-white rounded-xl shadow-lg hover:bg-blue-600 transition duration-200 ease-in-out">
+                    ⏸ 暂停计时
+                </button>
+
+                <!-- 导出 (现在直接调用 exportToTxt) -->
+                <button onclick="exportToTxt()" class="py-3 px-4 text-sm sm:text-lg font-semibold bg-indigo-500 text-white rounded-xl shadow-lg hover:bg-indigo-600 transition duration-200 ease-in-out">
+                    📥 导出记录 (TXT)
                 </button>
             </div>
             
-            <!-- 计时器显示区 (由父容器的 gap-6 自动添加间距) -->
-            <div id="timerDisplay" class="text-lg font-medium text-gray-700">
-                <!-- 计时器信息将在这里实时显示 -->
+            <!-- 撤销和计时器显示区 -->
+            <div class="flex w-full max-w-lg items-center justify-center gap-4 mt-2">
+                <!-- 撤销按钮 -->
+                <button id="undoButton" onclick="undoLastAction()" class="py-2 px-4 text-sm font-semibold bg-red-400 text-white rounded-xl shadow-md hover:bg-red-500 transition duration-150">
+                    ↩ 撤销
+                </button>
+                
+                <div id="timerDisplay" class="text-lg font-medium text-gray-700 flex-1 text-center">
+                    <!-- 计时器信息将在这里实时显示 -->
+                </div>
             </div>
 
-            <!-- 分数日志区域 (保持全宽) -->
-            <div id="logContainer" class="w-full max-w-4xl p-4 bg-gray-100 rounded-xl shadow-inner">
+            <!-- 分数日志区域 -->
+            <div id="logContainer" class="w-full max-w-4xl p-4 bg-gray-100 rounded-xl shadow-inner mt-4">
                 <!-- Log entries will be inserted here by JavaScript -->
             </div>
         </div>
-
     </div>
 
+    <!-- Settings Modal Overlay -->
+    <div id="settingsModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 z-50 flex items-center justify-center transition-opacity duration-300">
+        <!-- Modal Content -->
+        <!-- 使用 scale-95 开始，然后通过 JS 移除以实现过渡效果 -->
+        <div class="bg-white rounded-2xl p-6 md:p-8 w-11/12 max-w-md shadow-2xl transform scale-95 transition-transform duration-300">
+            <div class="flex justify-between items-center border-b pb-3 mb-4">
+                <h2 class="text-2xl font-bold text-gray-800">⚙️ 比赛设置</h2>
+                <button onclick="closeSettingsModal()" class="text-gray-400 hover:text-gray-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- Settings Switches Content -->
+            <div id="gameControlSwitches" class="w-full flex flex-col gap-6 p-2">
+                
+                <!-- NEW: 是否设置赛点 (主开关，开启后才判断胜负) -->
+                <div class="flex items-center justify-between gap-4 p-2 bg-indigo-50 rounded-xl border border-indigo-200">
+                    <label for="toggleMatchPointMode" class="text-lg font-bold text-gray-800 whitespace-nowrap">是否设置赛点 (启用胜负判定):</label>
+                    <!-- CHANGED: 移除 checked 属性，默认不开启赛点模式 -->
+                    <input type="checkbox" id="toggleMatchPointMode" class="toggle-switch" onchange="checkGameStatus(); updateSettingsVisibility(); updateMainSettingsDisplay();">
+                </div>
+
+                <!-- Container for Match Point Specific Settings (Visibility controlled by toggleMatchPointMode) -->
+                <!-- 使用 hidden 类名确保初始隐藏，JS 会在 onload 时覆盖 -->
+                <div id="matchPointSettingsContainer" class="flex flex-col gap-4 pl-4 border-l-4 border-gray-200 hidden">
+                    
+                    <!-- 赛点设置 (抢几分) -->
+                    <div class="flex items-center justify-between gap-4 p-2 bg-white border border-gray-200 rounded-xl shadow-sm">
+                        <label for="targetScoreInput" class="text-lg font-semibold text-gray-700 whitespace-nowrap">赛点 (抢几分):</label>
+                        <!-- 默认值 13 -->
+                        <input type="number" id="targetScoreInput" value="13" min="1" onchange="checkGameStatus(); updateMainSettingsDisplay();" class="w-20 p-2 text-center border-2 border-gray-300 rounded-lg focus:border-indigo-500 transition"/>
+                    </div>
+
+                    <!-- 启用两分制开关 -->
+                    <div class="flex items-center justify-between gap-4 p-2 bg-white border border-gray-200 rounded-xl shadow-sm">
+                        <label for="toggleMatchPoint" class="text-lg font-semibold text-gray-700 whitespace-nowrap">启用两分制获胜:</label>
+                        <!-- 使用自定义开关样式 -->
+                        <input type="checkbox" id="toggleMatchPoint" checked class="toggle-switch" onchange="checkGameStatus(); updateMainSettingsDisplay();">
+                    </div>
+
+                </div>
+            </div>
+            
+            <div class="mt-6 pt-4 border-t text-right">
+                <button onclick="closeSettingsModal()" class="py-2 px-6 bg-indigo-500 text-white font-semibold rounded-xl hover:bg-indigo-600 transition">
+                    完成
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- JavaScript Logic -->
     <script>
-        // --- 状态变量 ---
+        // --- 核心状态变量 ---
         let score1 = 0; // 队伍 A 的分数
         let score2 = 0; // 队伍 B 的分数
         let log1 = [];
         let log2 = [];
-        let startTime = null; // 比赛开始时间戳 (第一次操作或重置时设置)
+        let name1 = "队伍 A";
+        let name2 = "队伍 B";
+        let isGameOver = false; // 新增：是否已结束比赛
+
+        let startTime = null; // 比赛绝对开始时间戳
         let timerInterval = null; // 计时器 interval ID
+        let cumulativePausedDuration = 0; // 累计暂停时长 (ms)
+        let isPaused = false; // 游戏是否处于暂停状态
+        let pausedAt = null; // 记录最近一次暂停的时间点
+        
+        let audioContext = null; // Web Audio API Context
 
-        // --- LocalStorage Keys for Persistence ---
-        const STORAGE_KEY_SCORE1 = 'scoreCounter_score1';
-        const STORAGE_KEY_SCORE2 = 'scoreCounter_score2';
-        const STORAGE_KEY_LOG1 = 'scoreCounter_log1';
-        const STORAGE_KEY_LOG2 = 'scoreCounter_log2';
-        const STORAGE_KEY_START_TIME = 'scoreCounter_startTime'; // 新增计时键
-
-
+        
         /**
-         * 格式化毫秒数为 天/时/分/秒 的字符串
-         * @param {number} ms - 毫秒数
-         * @returns {string} 格式化后的时间字符串
+         * 重置本地状态变量和 UI。
          */
+        function resetLocalState() {
+            score1 = 0;
+            score2 = 0;
+            log1 = []; 
+            log2 = []; 
+            name1 = '队伍 A';
+            name2 = '队伍 B';
+            isGameOver = false; // 重置比赛状态
+            
+            cumulativePausedDuration = 0;
+            isPaused = false;
+            startTime = null; // 重置时设为 null，直到第一次得分才开始计时
+            pausedAt = null;
+
+            if (timerInterval) clearInterval(timerInterval);
+
+            // 重置 UI
+            document.getElementById('player1Name').value = name1;
+            document.getElementById('player2Name').value = name2;
+            
+            // --- NEW SETTINGS RESET ---
+            // 恢复默认赛点为 13
+            document.getElementById('targetScoreInput').value = 13; 
+            document.getElementById('toggleMatchPoint').checked = true; // 两分制默认开启
+            // CHANGED: 赛点模式默认关闭 (false)
+            document.getElementById('toggleMatchPointMode').checked = false; // 赛点模式默认关闭
+            updateSettingsVisibility(); // 重置后更新可见性
+            updateMainSettingsDisplay(); // NEW: 重置后更新主界面显示
+            // --------------------------
+            
+            updateScoreDisplay(1);
+            updateScoreDisplay(2);
+            updateLogDisplay();
+            updateTimerDisplay(); // 更新显示为 '未开始'
+
+            const pauseButton = document.getElementById('pauseResumeButton');
+            pauseButton.textContent = "⏸ 暂停计时";
+            pauseButton.classList.remove('bg-green-600', 'hover:bg-green-700');
+            pauseButton.classList.add('bg-blue-500', 'hover:bg-blue-600');
+            
+            // 清除获胜高亮和赛点提示
+            document.getElementById('player1Card').classList.remove('winner-card');
+            document.getElementById('player2Card').classList.remove('winner-card');
+            const existingTags = document.querySelectorAll('.match-point-text');
+            existingTags.forEach(tag => tag.remove());
+            
+            showCustomMessage("游戏已重置。", "bg-yellow-100 border-yellow-500 text-yellow-700");
+        }
+        
+        /**
+         * 播放得分或扣分音效 (Web Audio API)。
+         */
+        function playScoreSound(frequency = 660, duration = 0.05, type = 'sine') {
+            if (typeof AudioContext !== 'undefined' || typeof webkitAudioContext !== 'undefined') {
+                audioContext = audioContext || new (window.AudioContext || window.webkitAudioContext)();
+                
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+
+                oscillator.type = type;
+                oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+
+                // Fade out
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.00001, audioContext.currentTime + duration);
+
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + duration);
+            }
+        }
+
+        /** 格式化毫秒数为 天/时/分/秒 的字符串 */
         function formatDuration(ms) {
             if (ms < 0) ms = 0;
             const totalSeconds = Math.floor(ms / 1000);
@@ -145,11 +333,7 @@
             return result;
         }
         
-        /**
-         * 格式化时间戳为 YYYY/MM/DD HH:MM:SS 字符串。
-         * @param {number} timestamp - 毫秒时间戳。
-         * @returns {string} 格式化后的日期时间字符串。
-         */
+        /** 格式化时间戳为 YYYY/MM/DD HH:MM:SS 字符串 */
         function formatDateTime(timestamp) {
             if (timestamp === null) return 'N/A';
             const date = new Date(timestamp);
@@ -163,38 +347,87 @@
         }
         
         /**
-         * 启动或重启实时计时器。
+         * 启动实时计时器。
          */
         function startTimer() {
-            // 先清除任何现有的计时器
             if (timerInterval) {
                 clearInterval(timerInterval);
             }
             
-            if (startTime !== null) {
-                // 立即更新一次显示
+            if (startTime !== null && !isPaused) {
                 updateTimerDisplay();
-                // 每秒更新一次显示
                 timerInterval = setInterval(updateTimerDisplay, 1000);
             } else {
-                // 如果没有开始时间，则显示未开始
-                document.getElementById('timerDisplay').textContent = "游戏状态: 未开始";
+                updateTimerDisplay();
             }
         }
         
+        /**
+         * 暂停或继续计时。
+         */
+        function togglePause() {
+            const button = document.getElementById('pauseResumeButton');
+
+            if (startTime === null) {
+                showCustomMessage("请先开始计分或重置游戏以启动计时器。", "bg-yellow-100 border-yellow-500 text-yellow-700");
+                return;
+            }
+            
+            // 只有在启用赛点模式且比赛已结束时才阻止暂停
+            const matchPointMode = document.getElementById('toggleMatchPointMode')?.checked ?? true;
+            if (isGameOver && matchPointMode) {
+                showCustomMessage("比赛已结束，请先重置。", "bg-red-100 border-red-500 text-red-700");
+                return;
+            }
+
+            if (isPaused) {
+                // Resume
+                const pausedDuration = Date.now() - pausedAt;
+                cumulativePausedDuration += pausedDuration;
+                isPaused = false;
+                pausedAt = null; // 清除暂停时间点
+                button.textContent = "⏸ 暂停计时";
+                button.classList.remove('bg-green-600', 'hover:bg-green-700');
+                button.classList.add('bg-blue-500', 'hover:bg-blue-600');
+                startTimer(); // Restart interval
+                showCustomMessage("计时已继续。", "bg-blue-100 border-blue-500 text-blue-700");
+            } else {
+                // Pause
+                if (timerInterval) clearInterval(timerInterval);
+                isPaused = true;
+                pausedAt = Date.now();
+                button.textContent = "▶ 继续计时";
+                button.classList.remove('bg-blue-500', 'hover:bg-blue-600');
+                button.classList.add('bg-green-600', 'hover:bg-green-700');
+                updateTimerDisplay(); // Update display immediately to reflect 'Paused' status
+                showCustomMessage("计时已暂停。", "bg-yellow-100 border-yellow-500 text-yellow-700");
+            }
+        }
+
         /**
          * 计算并更新计时器显示。
          */
         function updateTimerDisplay() {
             if (startTime === null) {
-                // 如果计时被停止，确保显示正确的初始状态
                 document.getElementById('timerDisplay').textContent = "游戏状态: 未开始";
                 clearInterval(timerInterval);
                 timerInterval = null;
                 return;
             }
+
+            // 总游玩时长 = (当前时间 - 绝对开始时间) - 累计暂停时长
+            let durationMs;
             
-            const durationMs = Date.now() - startTime;
+            if (isPaused || isGameOver) {
+                // 如果已暂停或已结束，使用最近一次暂停/结束时间
+                const referenceTime = pausedAt || (isGameOver ? Date.now() : Date.now()); 
+                durationMs = referenceTime - startTime - cumulativePausedDuration;
+                const duration = formatDuration(durationMs);
+                document.getElementById('timerDisplay').textContent = isGameOver ? `已结束 (总时长: ${duration})` : `已暂停 (已玩: ${duration})`;
+                return;
+            }
+            
+            durationMs = (Date.now() - startTime) - cumulativePausedDuration;
             const duration = formatDuration(durationMs);
             document.getElementById('timerDisplay').textContent = `已持续计时: ${duration}`;
         }
@@ -202,14 +435,12 @@
 
         /**
          * 更新指定队伍的分数显示。
-         * @param {number} player - 队伍编号 (1 或 2)。
          */
         function updateScoreDisplay(player) {
             const scoreElement = document.getElementById(`player${player}Score`);
             const currentScore = player === 1 ? score1 : score2;
             
             scoreElement.textContent = currentScore;
-            // 添加一个微小的动画效果
             scoreElement.classList.add('scale-105');
             setTimeout(() => {
                 scoreElement.classList.remove('scale-105');
@@ -220,9 +451,9 @@
          * 更新得分记录列表。
          */
         function updateLogDisplay() {
+            name1 = document.getElementById('player1Name').value;
+            name2 = document.getElementById('player2Name').value;
             const logContainer = document.getElementById('logContainer');
-            const name1 = document.getElementById('player1Name').value;
-            const name2 = document.getElementById('player2Name').value;
 
             // 合并并按时间戳降序排列 (最新的在最上面)
             const combinedLog = [
@@ -232,7 +463,6 @@
                 return a.timestamp - b.timestamp;
             }).reverse();
             
-            // 只显示最近的 15 条记录
             const recentLog = combinedLog.slice(0, 15);
 
             let logHtml = `<h2 class="text-xl font-bold text-gray-700 mb-4 text-center">最近 ${recentLog.length} 条得分记录</h2>`;
@@ -262,132 +492,400 @@
         }
 
         /**
-         * 保存当前状态到 localStorage。
-         */
-        function saveState() {
-            try {
-                localStorage.setItem(STORAGE_KEY_SCORE1, score1);
-                localStorage.setItem(STORAGE_KEY_SCORE2, score2);
-                localStorage.setItem(STORAGE_KEY_LOG1, JSON.stringify(log1));
-                localStorage.setItem(STORAGE_KEY_LOG2, JSON.stringify(log2));
-                // 保存开始时间
-                if (startTime !== null) {
-                    localStorage.setItem(STORAGE_KEY_START_TIME, startTime);
-                } else {
-                    localStorage.removeItem(STORAGE_KEY_START_TIME);
-                }
-            } catch (e) {
-                console.error("Failed to save state to localStorage:", e);
-            }
-        }
-
-        /**
-         * 从 localStorage 加载状态。
-         */
-        function loadState() {
-            try {
-                const storedScore1 = localStorage.getItem(STORAGE_KEY_SCORE1);
-                const storedScore2 = localStorage.getItem(STORAGE_KEY_SCORE2);
-                const storedLog1 = localStorage.getItem(STORAGE_KEY_LOG1);
-                const storedLog2 = localStorage.getItem(STORAGE_KEY_LOG2);
-                const storedStartTime = localStorage.getItem(STORAGE_KEY_START_TIME);
-
-                if (storedScore1 !== null) score1 = parseInt(storedScore1, 10) || 0;
-                if (storedScore2 !== null) score2 = parseInt(storedScore2, 10) || 0;
-                if (storedLog1 !== null) log1 = JSON.parse(storedLog1) || [];
-                if (storedLog2 !== null) log2 = JSON.parse(storedLog2) || [];
-                // 加载开始时间
-                if (storedStartTime !== null) {
-                    startTime = parseInt(storedStartTime, 10);
-                } else {
-                    startTime = null; 
-                }
-            } catch (e) {
-                console.error("Failed to load state from localStorage, resetting to default:", e);
-                score1 = 0;
-                score2 = 0;
-                log1 = [];
-                log2 = [];
-                startTime = null;
-            }
-        }
-
-
-        /**
          * 改变指定队伍的分数。
-         * @param {number} player - 队伍编号 (1 或 2)。
-         * @param {number} amount - 分数变化量 (可为正或负)。
          */
         function changeScore(player, amount) {
+            // 获取新的主开关状态
+            const matchPointMode = document.getElementById('toggleMatchPointMode')?.checked ?? false; // 默认改为 false
+            
+            // 检查是否在赛点模式下并且比赛已结束，如果已结束且在赛点模式下，禁止得分
+            if (isGameOver && matchPointMode) {
+                showCustomMessage("比赛已结束，请点击 '开始/重置' 重新开始。", "bg-red-100 border-red-500 text-red-700");
+                playScoreSound(110, 0.2, 'square');
+                return;
+            }
+            
+            // 如果在无限模式下得分，且之前标记了结束 (可能是从赛点模式切换过来)，现在应该取消结束状态并继续计时
+            if (isGameOver && !matchPointMode) {
+                isGameOver = false;
+                if(isPaused) togglePause(); // 如果之前暂停了，自动继续
+                else startTimer();
+            }
+
             const now = new Date();
             const wasStartTimeNull = (startTime === null);
 
-            // 如果 startTime 为空，则设置当前时间为游戏开始时间
             if (wasStartTimeNull) {
                 startTime = now.getTime();
+                cumulativePausedDuration = 0;
+                isPaused = false;
+                startTimer();
+            } else if (isPaused) {
+                // 如果在暂停状态下计分，自动解除暂停并继续计时
+                togglePause();
             }
-
-            // 格式化时间为 HH:MM:SS
+            
+            name1 = document.getElementById('player1Name').value;
+            name2 = document.getElementById('player2Name').value;
             const timeString = now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
             
             if (player === 1) {
                 score1 += amount;
-                if (score1 < 0) score1 = 0; // 防止负分
+                if (score1 < 0) score1 = 0;
                 log1.push({ time: timeString, amount: amount, scoreA: score1, scoreB: score2, timestamp: now.getTime() });
             } else if (player === 2) {
                 score2 += amount;
-                if (score2 < 0) score2 = 0; // 防止负分
+                if (score2 < 0) score2 = 0;
                 log2.push({ time: timeString, amount: amount, scoreA: score1, scoreB: score2, timestamp: now.getTime() });
             }
             
-            if (wasStartTimeNull) {
-                startTimer(); // 如果是第一次操作，启动计时器
-            }
+            playScoreSound(amount > 0 ? 660 : 330); // 播放音效：高频得分，低频扣分
 
             updateScoreDisplay(player);
-            updateLogDisplay(); // 更新日志显示
-            saveState(); // 每次分数变动后保存状态
+            updateLogDisplay();
+            
+            // 检查游戏状态
+            checkGameStatus();
         }
+        
+        /**
+         * 撤销最后一次操作。
+         */
+        function undoLastAction() {
+            // 合并所有日志并按时间戳降序排列 (最新的在最上面)
+            const combinedLog = [
+                ...log1.map(item => ({ ...item, isPlayer1: true, logArray: log1, name: document.getElementById('player1Name').value })),
+                ...log2.map(item => ({ ...item, isPlayer1: false, logArray: log2, name: document.getElementById('player2Name').value }))
+            ].sort((a, b) => b.timestamp - a.timestamp); 
+
+            if (combinedLog.length === 0) {
+                showCustomMessage("没有可撤销的操作。", "bg-red-100 border-red-500 text-red-700");
+                return;
+            }
+
+            // 如果游戏结束，撤销操作应能重新激活游戏
+            if (isGameOver) {
+                isGameOver = false;
+                startTimer();
+            }
+
+            const lastEntry = combinedLog[0];
+            const logArrayToModify = lastEntry.isPlayer1 ? log1 : log2;
+            
+            // 找到最后一个匹配的条目 (按时间戳)
+            const indexToRemove = logArrayToModify.findIndex(item => 
+                item.timestamp === lastEntry.timestamp && 
+                item.amount === lastEntry.amount && 
+                item.scoreA === lastEntry.scoreA && 
+                item.scoreB === lastEntry.scoreB
+            );
+
+            if (indexToRemove > -1) {
+                // 移除日志条目
+                logArrayToModify.splice(indexToRemove, 1);
+                
+                // 回滚分数
+                if (lastEntry.isPlayer1) {
+                    score1 -= lastEntry.amount;
+                    if (score1 < 0) score1 = 0;
+                    updateScoreDisplay(1);
+                } else {
+                    score2 -= lastEntry.amount;
+                    if (score2 < 0) score2 = 0;
+                    updateScoreDisplay(2);
+                }
+                
+                playScoreSound(220); // 撤销音效
+                showCustomMessage(`已撤销操作：${lastEntry.name} ${lastEntry.amount > 0 ? '+' : ''}${lastEntry.amount}`, "bg-green-100 border-green-500 text-green-700");
+
+                // 如果日志清空，重置计时器状态
+                if (log1.length === 0 && log2.length === 0) {
+                    resetLocalState();
+                } else {
+                    // 撤销后重新检查赛点状态
+                    checkGameStatus(); 
+                }
+
+                updateLogDisplay();
+            } else {
+                showCustomMessage("撤销失败：未找到匹配的日志条目。", "bg-red-100 border-red-500 text-red-700");
+            }
+        }
+        
+        /**
+         * 控制赛点相关的设置项的可见性 (仅针对设置模态框内部)。
+         */
+        function updateSettingsVisibility() {
+            const modeToggle = document.getElementById('toggleMatchPointMode');
+            const settingsContainer = document.getElementById('matchPointSettingsContainer');
+            
+            if (modeToggle && settingsContainer) {
+                if (modeToggle.checked) {
+                    settingsContainer.classList.remove('hidden');
+                } else {
+                    settingsContainer.classList.add('hidden');
+                }
+            }
+        }
+
+        /**
+         * NEW: 更新主界面赛点设置的显示。
+         */
+        function updateMainSettingsDisplay() {
+            const display = document.getElementById('mainSettingsDisplay');
+            const modeToggle = document.getElementById('toggleMatchPointMode');
+            
+            if (!display || !modeToggle) return; 
+
+            const isMatchPointMode = modeToggle.checked;
+            
+            if (isMatchPointMode) {
+                const targetScoreInput = document.getElementById('targetScoreInput');
+                const matchPointToggle = document.getElementById('toggleMatchPoint');
+                
+                const targetScore = targetScoreInput ? targetScoreInput.value : 'N/A';
+                const winByTwo = matchPointToggle && matchPointToggle.checked;
+                
+                let winCondition = `抢 ${targetScore} 分`;
+                if (winByTwo) {
+                    winCondition += " (需领先 2 分)";
+                } else {
+                    winCondition += " (不设两分制)";
+                }
+
+                let statusColor = isGameOver ? 'text-green-600' : 'text-indigo-600';
+                let statusText = isGameOver ? '✅ 比赛已结束' : '🔵 赛点模式 (启用胜负判定)';
+
+                display.innerHTML = `
+                    <p class="text-xl font-bold ${statusColor} mb-1">${statusText}</p>
+                    <p class="text-md font-medium text-gray-700">获胜条件: ${winCondition}</p>
+                `;
+                display.classList.remove('hidden');
+
+            } else {
+                // Unlimited Scoring Mode (No Match Point)
+                let statusColor = 'text-gray-600';
+                let statusText = '🟡 无限记分模式 (不判断胜负)';
+                
+                display.innerHTML = `
+                    <p class="text-xl font-bold ${statusColor} mb-1">${statusText}</p>
+                    <p class="text-md font-medium text-gray-700">分数达到目标后游戏不会自动结束。</p>
+                `;
+                display.classList.remove('hidden');
+            }
+        }
+
+
+        /**
+         * 检查当前分数是否达到赛点或比赛结束。
+         */
+        function checkGameStatus() {
+            // 1. 清除现有高亮/指示器
+            document.getElementById('player1Card').classList.remove('winner-card');
+            document.getElementById('player2Card').classList.remove('winner-card');
+            const existingTags = document.querySelectorAll('.match-point-text');
+            existingTags.forEach(tag => tag.remove());
+            
+            const targetScoreInput = document.getElementById('targetScoreInput');
+            const toggleMatchPoint = document.getElementById('toggleMatchPoint');
+            const toggleMatchPointMode = document.getElementById('toggleMatchPointMode'); 
+
+            // 检查元素是否存在，防止在页面加载前调用出错
+            if (!targetScoreInput || !toggleMatchPoint || !toggleMatchPointMode) {
+                 return;
+            }
+
+            const matchPointMode = toggleMatchPointMode.checked; // 获取主开关状态
+            
+            // --- 核心逻辑: 如果未设置赛点模式 (MatchPointMode = OFF)，则进行无限记分，不判断胜负 ---
+            if (!matchPointMode) {
+                 isGameOver = false; // 确保即使之前结束，现在也可以继续
+                 if (startTime !== null && !isPaused) startTimer(); // 确保计时器能继续
+                 updateMainSettingsDisplay(); // NEW: 更新显示状态
+                 return; 
+            }
+            // --- 赛点模式开启时，继续执行以下获胜逻辑 ---
+
+            const targetScore = parseInt(targetScoreInput.value, 10);
+            const matchPointEnabled = toggleMatchPoint.checked; 
+            
+            if (isNaN(targetScore) || targetScore <= 0) return; 
+
+            const scoreA = score1;
+            const scoreB = score2;
+            
+            let winner = 0;
+            
+            if (matchPointEnabled) {
+                // 启用两分制：需要达到目标分数且领先至少 2 分 (常见的排球/羽毛球/乒乓球规则)
+                const winByTwo = (Math.abs(scoreA - scoreB) >= 2);
+                
+                if (scoreA >= targetScore && winByTwo) {
+                    winner = 1;
+                } else if (scoreB >= targetScore && winByTwo) {
+                    winner = 2;
+                } else {
+                    // 赛点提示逻辑 
+                    if (scoreA >= targetScore - 1 && scoreB < scoreA && scoreB < targetScore - 1) {
+                         // A 领先，且 A 仅差一分获胜 (如 12-10, 目标 13)
+                         updateGamePointIndicators(1);
+                    } else if (scoreB >= targetScore - 1 && scoreA < scoreB && scoreA < targetScore - 1) {
+                         // B 领先，且 B 仅差一分获胜 (如 10-12, 目标 13)
+                         updateGamePointIndicators(2);
+                    } else if (scoreA >= targetScore - 1 && scoreB >= targetScore - 1 && Math.abs(scoreA - scoreB) === 1) {
+                        // 占先/赛末点：比分胶着，领先一方获得赛点 (如 13-12, 目标 13)
+                        if (scoreA > scoreB) {
+                            updateGamePointIndicators(1, true); // 占先/赛点
+                        } else {
+                            updateGamePointIndicators(2, true); // 占先/赛点
+                        }
+                    }
+                }
+
+            } else {
+                // 禁用两分制：只需达到目标分数即可获胜 (First to Target)
+                if (scoreA >= targetScore && scoreA > scoreB) {
+                    winner = 1;
+                } else if (scoreB >= targetScore && scoreB > scoreA) {
+                    winner = 2;
+                }
+                // 在非两分制模式下，不显示“赛点”提示
+            }
+
+
+            if (winner !== 0) {
+                highlightWinner(winner);
+            }
+            
+            updateMainSettingsDisplay(); // NEW: 每次检查状态后都更新主界面显示 (包括比赛是否结束)
+        }
+
+        /**
+         * 突出显示获胜的队伍并结束计时。
+         */
+        function highlightWinner(player) {
+            isGameOver = true; // 标记比赛结束
+            if (timerInterval) clearInterval(timerInterval); // 停止计时器显示更新
+            pausedAt = Date.now(); // 记录结束时间点
+
+            const winningCard = document.getElementById(`player${player}Card`);
+            winningCard.classList.add('winner-card');
+            
+            const winningName = document.getElementById(`player${player}Name`).value;
+            
+            showCustomMessage(`🎉 恭喜 ${winningName} 赢得比赛! 最终比分 ${score1} - ${score2}`, "bg-green-100 border-green-700 text-green-800");
+            updateTimerDisplay(); // 更新显示为 '已结束'
+        }
+
+        /**
+         * 更新赛点 (Match Point) 提示。
+         */
+        function updateGamePointIndicators(player, isDeucePoint = false) {
+            // 先移除另一队的提示
+            const otherPlayer = player === 1 ? 2 : 1;
+            const otherCard = document.getElementById(`player${otherPlayer}Card`);
+            const otherTags = otherCard.querySelectorAll('.match-point-text');
+            otherTags.forEach(tag => tag.remove());
+            
+            // Create a 'Match Point' tag on the specified player's card
+            const card = document.getElementById(`player${player}Card`);
+            
+            // 避免重复添加
+            if (card.querySelector('.match-point-text')) return;
+
+            const tag = document.createElement('span');
+            tag.className = 'match-point-text';
+            tag.textContent = isDeucePoint ? '占先/赛点' : '赛点';
+            card.appendChild(tag);
+            
+            const playerName = document.getElementById(`player${player}Name`).value;
+            // 只有当不是平分胶着时的占先点才播放大提示
+            if (!isDeucePoint || score1 === score2 + 1 || score2 === score1 + 1) {
+                showCustomMessage(`🔥 ${playerName} 达到赛点！`, "bg-red-100 border-red-500 text-red-700");
+            }
+        }
+
+        /**
+         * 打开设置模态框。
+         */
+        function openSettingsModal() {
+            const modal = document.getElementById('settingsModal');
+            modal.classList.remove('hidden');
+            updateSettingsVisibility(); // 确保打开时可见性正确
+            // 确保内容从小缩放至正常大小
+            setTimeout(() => {
+                modal.querySelector('.bg-white').classList.remove('scale-95');
+                modal.classList.add('opacity-100');
+            }, 10);
+        }
+
+        /**
+         * 关闭设置模态框。
+         */
+        function closeSettingsModal() {
+            const modal = document.getElementById('settingsModal');
+            // 确保内容从小缩放至正常大小
+            modal.querySelector('.bg-white').classList.add('scale-95');
+            modal.classList.remove('opacity-100');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300); // Wait for transition
+
+            // NEW: 关闭设置后，重新检查游戏状态并更新主界面显示
+            checkGameStatus();
+            updateMainSettingsDisplay();
+        }
+
 
         /**
          * 导出所有分数记录为 纯文本 (TXT) 文件。
          */
-        function exportLog() {
+        function exportToTxt() {
             if (log1.length === 0 && log2.length === 0) {
                 showCustomMessage("没有可导出的记录。", "bg-yellow-100 border-yellow-500 text-yellow-700");
                 return;
             }
 
+            // 如果正在计时，暂停计时以获取准确的结束时间
+            const wasRunning = (startTime !== null && !isPaused && !isGameOver);
+            if(wasRunning) togglePause();
+            
             const name1 = document.getElementById('player1Name').value;
             const name2 = document.getElementById('player2Name').value;
+            
+            // 安全获取设置值
+            const targetScoreInput = document.getElementById('targetScoreInput');
+            const toggleMatchPoint = document.getElementById('toggleMatchPoint');
+            const toggleMatchPointMode = document.getElementById('toggleMatchPointMode'); // NEW: 主开关
 
-            // Combine and sort log entries by timestamp in ASCENDING order for chronological export
+            const matchPointModeChecked = toggleMatchPointMode?.checked ?? false;
+            const targetScoreValue = targetScoreInput ? targetScoreInput.value : 'N/A';
+            const matchPointChecked = toggleMatchPoint ? toggleMatchPoint.checked : true;
+            
+            // --- PLAIN TEXT EXPORT LOGIC ---
             const combinedLog = [
                 ...log1.map(item => ({ ...item, player: 1, name: name1 })),
                 ...log2.map(item => ({ ...item, player: 2, name: name2 }))
             ].sort((a, b) => a.timestamp - b.timestamp); 
 
-            // --- PLAIN TEXT EXPORT LOGIC ---
-            const nowTime = Date.now();
+            const nowTime = pausedAt || Date.now();
             
-            // 格式化开始和结束日期
+            // 格式化日期
             const dateFormatOptions = { year: 'numeric', month: '2-digit', day: '2-digit' };
             const startDateStr = startTime ? new Date(startTime).toLocaleDateString('zh-CN', dateFormatOptions) : 'N/A';
             const endDateStr = new Date(nowTime).toLocaleDateString('zh-CN', dateFormatOptions);
 
-            // 确定标题日期范围：如果跨天，显示 "开始日期 - 结束日期"
             let titleDateRange = endDateStr;
             if (startTime && startDateStr !== endDateStr) {
                 titleDateRange = `${startDateStr} - ${endDateStr}`;
             } else if (startTime) {
-                 // 同一天，只显示开始日期
                 titleDateRange = startDateStr;
             }
 
             // 计算并格式化总时长
             let durationString = 'N/A';
             if (startTime !== null) {
-                const durationMs = nowTime - startTime;
+                const durationMs = (nowTime - startTime) - cumulativePausedDuration;
                 durationString = formatDuration(durationMs);
             }
             
@@ -396,23 +894,30 @@
             const endDateTimeStr = formatDateTime(nowTime);
 
             
-            // 定义列宽 (基于标准空格字符数，方便对齐)
+            // 定义列宽
             const W_IDX = 5;
             const W_TIME = 8;
-            const W_NAME = 12; // 增加宽度以适应中文和队名
+            const W_NAME = 12;
             const W_AMOUNT = 6;
             const W_SCORE = 10;
             const SEPARATOR = " | ";
             
             // 纯文本文件头
-            let textContent = `比赛得分记录 - ${titleDateRange}\n`; // 使用新的日期范围标题
+            let textContent = `比赛得分记录 - ${titleDateRange}\n`;
             textContent += `队伍 A: ${name1}\n队伍 B: ${name2}\n`;
-            textContent += `开始时间: ${startDateTimeStr}\n`; // 新增开始时间
-            textContent += `结束时间: ${endDateTimeStr}\n`; // 新增结束时间
-            textContent += `计时时长: ${durationString}\n`; // 在头部添加总计时
+            textContent += `最终比分: ${score1} - ${score2}${isGameOver && matchPointModeChecked ? " (已结束)" : " (进行中)"}\n`;
+            textContent += `赛点模式: ${matchPointModeChecked ? '启用' : '禁用 (无限记分)'}\n`; 
+            if (matchPointModeChecked) {
+                 textContent += `赛点目标: ${targetScoreValue}\n`;
+                 textContent += `两分制获胜: ${matchPointChecked ? '启用' : '禁用'}\n`;
+            }
+            textContent += `开始时间: ${startDateTimeStr}\n`;
+            textContent += `结束时间: ${endDateTimeStr}\n`;
+            textContent += `计时时长: ${durationString}\n`;
+            textContent += `累计暂停时长: ${formatDuration(cumulativePausedDuration)}\n`;
             textContent += "====================================================================\n\n";
 
-            // Header row: 使用 padEnd 实现左对齐
+            // Header row
             let header = "";
             header += "序号".padEnd(W_IDX, ' ');
             header += SEPARATOR;
@@ -425,7 +930,6 @@
             header += "最终比分"; 
             
             textContent += header + "\n";
-            // 生成分隔线，确保长度与列宽匹配
             const LINE_SEP = "-".repeat(W_IDX + SEPARATOR.length + W_TIME + SEPARATOR.length + W_NAME + SEPARATOR.length + W_AMOUNT + SEPARATOR.length + W_SCORE);
             textContent += LINE_SEP + "\n";
 
@@ -435,7 +939,6 @@
                 const amountText = entry.amount > 0 ? `+${entry.amount}` : `${entry.amount}`;
                 const scoreText = `${entry.scoreA} - ${entry.scoreB}`;
                 
-                // Data rows using String padding for alignment (padEnd实现左对齐)
                 let dataRow = "";
                 dataRow += String(index + 1).padEnd(W_IDX, ' ');
                 dataRow += SEPARATOR;
@@ -458,53 +961,28 @@
             
             link.setAttribute("href", url);
             
-            // File name: ScoreLog-YYYYMMDD.txt (以导出时的日期命名)
             const dateStr = new Date(nowTime).toISOString().slice(0, 10).replace(/-/g, '');
             link.setAttribute("download", `ScoreLog-${dateStr}.txt`);
             
-            // 隐藏链接并点击触发下载
             link.style.visibility = 'hidden';
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
 
             showCustomMessage("记录已成功导出为 TXT 文件！", "bg-green-100 border-green-500 text-green-700");
+            
+            // 如果导出前计时是运行的，则继续计时
+            if(wasRunning) togglePause();
         }
+
 
         /**
          * 重置所有分数、日志和名称。
          */
         function resetGame() {
-            score1 = 0;
-            score2 = 0;
-            log1 = []; 
-            log2 = []; 
-            startTime = Date.now(); // 重置游戏时，重新设置开始时间
-
-            // 清除 localStorage 中的数据，实现彻底重置
-            localStorage.removeItem(STORAGE_KEY_SCORE1);
-            localStorage.removeItem(STORAGE_KEY_SCORE2);
-            localStorage.removeItem(STORAGE_KEY_LOG1);
-            localStorage.removeItem(STORAGE_KEY_LOG2);
-            
-            // 确保保存新的 startTime
-            saveState();
-
-            updateScoreDisplay(1);
-            updateScoreDisplay(2);
-            updateLogDisplay(); // 更新日志视图
-            
-            // 启动或重启计时器
-            startTimer();
-            
-            // 重置名称
-            document.getElementById('player1Name').value = '队伍 A';
-            document.getElementById('player2Name').value = '队伍 B';
-
-            // 弹出提示框 (使用自定义的简单提示代替alert)
-            showCustomMessage("游戏已重置，计时已重新开始！", "bg-yellow-100 border-yellow-500 text-yellow-700");
+            resetLocalState(); // 只重置本地状态
         }
-
+        
         /**
          * 显示一个自定义的短暂提示信息，代替 alert()。
          */
@@ -520,6 +998,7 @@
             messageBox.className = `fixed top-4 left-1/2 transform -translate-x-1/2 z-50 p-4 rounded-xl shadow-2xl transition-opacity duration-300 ${tailwindClasses}`;
             messageBox.textContent = message;
             
+            // 确保 messageBox 在顶部并可见
             messageBox.classList.remove('opacity-0');
             messageBox.classList.add('opacity-100');
 
@@ -529,16 +1008,25 @@
             }, 3000);
         }
 
-        // 页面加载时初始化显示
+        // 页面加载时初始化
         window.onload = function() {
-            loadState(); // 1. 加载上次保存的状态
-            updateScoreDisplay(1); // 2. 更新分数显示
-            updateScoreDisplay(2);
-            updateLogDisplay(); // 3. 更新日志区域
-            
-            // 4. 启动动态计时器（如果计时已开始）
-            startTimer();
+            resetLocalState();
+            // 在加载时更新可见性，确保初始状态正确
+            updateSettingsVisibility(); 
+            updateMainSettingsDisplay(); // NEW: 确保主界面设置信息在加载时显示
         };
+
+        // 将函数挂载到 window 对象上
+        window.changeScore = changeScore;
+        window.resetGame = resetGame;
+        window.togglePause = togglePause;
+        window.exportToTxt = exportToTxt; 
+        window.undoLastAction = undoLastAction;
+        window.checkGameStatus = checkGameStatus; // 暴露 checkGameStatus 以供 onchange 调用
+        window.openSettingsModal = openSettingsModal;
+        window.closeSettingsModal = closeSettingsModal;
+        window.updateSettingsVisibility = updateSettingsVisibility; // 暴露新的可见性函数
+        window.updateMainSettingsDisplay = updateMainSettingsDisplay; // 暴露新的主界面显示函数
     </script>
 </body>
 </html>
