@@ -26,7 +26,7 @@
     <!-- 主容器 -->
     <div class="w-full max-w-4xl bg-white shadow-2xl rounded-3xl p-6 md:p-10 border border-gray-100">
         
-        <h1 class="text-3xl md:text-4xl font-extrabold text-center text-gray-800 mb-8">
+        <h1 class="3xl md:text-4xl font-extrabold text-center text-gray-800 mb-8">
             🏆 比赛计分器
         </h1>
 
@@ -35,7 +35,9 @@
             
             <!-- 队伍 1 计分卡 -->
             <div id="player1Card" class="bg-blue-50 border-2 border-blue-200 rounded-2xl p-6 flex-1 shadow-xl">
+                <!-- 队名输入框 -->
                 <input type="text" id="player1Name" value="队伍 A" class="w-full text-center text-2xl md:text-3xl font-semibold mb-4 bg-transparent border-b border-blue-300 focus:outline-none focus:border-blue-500 transition" />
+                <!-- 分数显示 -->
                 <div id="player1Score" class="text-7xl md:text-9xl font-extrabold text-center mb-6 text-blue-600 transition duration-300 ease-in-out">0</div>
 
                 <!-- 控制按钮 (只有 +1 和 -1) -->
@@ -56,7 +58,9 @@
 
             <!-- 队伍 2 计分卡 -->
             <div id="player2Card" class="bg-red-50 border-2 border-red-200 rounded-2xl p-6 flex-1 shadow-xl">
+                <!-- 队名输入框 -->
                 <input type="text" id="player2Name" value="队伍 B" class="w-full text-center text-2xl md:text-3xl font-semibold mb-4 bg-transparent border-b border-red-300 focus:outline-none focus:border-red-500 transition" />
+                <!-- 分数显示 -->
                 <div id="player2Score" class="text-7xl md:text-9xl font-extrabold text-center mb-6 text-red-600 transition duration-300 ease-in-out">0</div>
                 
                 <!-- 控制按钮 (只有 +1 和 -1) -->
@@ -72,17 +76,29 @@
         </div>
 
         <!-- 游戏控制区 -->
-        <div class="mt-8 pt-6 border-t border-gray-200 flex flex-col md:flex-row items-center justify-center gap-4">
-            <button onclick="resetGame()" class="py-3 px-8 text-lg font-semibold bg-yellow-500 text-white rounded-full shadow-lg hover:bg-yellow-600 transition duration-200 ease-in-out transform hover:scale-[1.05] active:scale-100">
-                🔄 重置游戏
-            </button>
-            <!-- 新增导出按钮 -->
-            <button onclick="exportLog()" class="py-3 px-8 text-lg font-semibold bg-indigo-500 text-white rounded-full shadow-lg hover:bg-indigo-600 transition duration-200 ease-in-out transform hover:scale-[1.05] active:scale-100">
-                📥 导出记录
-            </button>
+        <!-- 核心容器改为 flex-col，确保按钮组、计时器、日志垂直堆叠 -->
+        <div class="mt-8 pt-6 border-t border-gray-200 flex flex-col items-center gap-6">
             
-            <!-- 分数日志区域 -->
-            <div id="logContainer" class="w-full max-w-2xl mt-4 p-4 bg-gray-100 rounded-xl shadow-inner">
+            <!-- 按钮容器：强制横向排布 (flex)，全宽 (w-full)，且最大宽度限制为 md，确保美观 -->
+            <div class="flex w-full max-w-md gap-4"> 
+                <!-- 开始/重置 按钮 (flex-1 确保等宽) -->
+                <button onclick="resetGame()" class="flex-1 py-4 px-6 text-lg font-semibold bg-yellow-500 text-white rounded-3xl shadow-lg hover:bg-yellow-600 transition duration-200 ease-in-out transform hover:scale-[1.05] active:scale-100">
+                    🔄 开始/重置
+                </button>
+
+                <!-- 导出按钮 (flex-1 确保等宽) -->
+                <button onclick="exportLog()" class="flex-1 py-4 px-6 text-lg font-semibold bg-indigo-500 text-white rounded-3xl shadow-lg hover:bg-indigo-600 transition duration-200 ease-in-out transform hover:scale-[1.05] active:scale-100">
+                    📥 导出记录
+                </button>
+            </div>
+            
+            <!-- 计时器显示区 (由父容器的 gap-6 自动添加间距) -->
+            <div id="timerDisplay" class="text-lg font-medium text-gray-700">
+                <!-- 计时器信息将在这里实时显示 -->
+            </div>
+
+            <!-- 分数日志区域 (保持全宽) -->
+            <div id="logContainer" class="w-full max-w-4xl p-4 bg-gray-100 rounded-xl shadow-inner">
                 <!-- Log entries will be inserted here by JavaScript -->
             </div>
         </div>
@@ -95,12 +111,93 @@
         let score2 = 0; // 队伍 B 的分数
         let log1 = [];
         let log2 = [];
+        let startTime = null; // 比赛开始时间戳 (第一次操作或重置时设置)
+        let timerInterval = null; // 计时器 interval ID
 
         // --- LocalStorage Keys for Persistence ---
         const STORAGE_KEY_SCORE1 = 'scoreCounter_score1';
         const STORAGE_KEY_SCORE2 = 'scoreCounter_score2';
         const STORAGE_KEY_LOG1 = 'scoreCounter_log1';
         const STORAGE_KEY_LOG2 = 'scoreCounter_log2';
+        const STORAGE_KEY_START_TIME = 'scoreCounter_startTime'; // 新增计时键
+
+
+        /**
+         * 格式化毫秒数为 天/时/分/秒 的字符串
+         * @param {number} ms - 毫秒数
+         * @returns {string} 格式化后的时间字符串
+         */
+        function formatDuration(ms) {
+            if (ms < 0) ms = 0;
+            const totalSeconds = Math.floor(ms / 1000);
+            
+            const days = Math.floor(totalSeconds / (3600 * 24));
+            const hours = Math.floor((totalSeconds % (3600 * 24)) / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+
+            let result = '';
+            if (days > 0) result += `${days}天`;
+            result += `${String(hours).padStart(2, '0')}时`;
+            result += `${String(minutes).padStart(2, '0')}分`;
+            result += `${String(seconds).padStart(2, '0')}秒`;
+            
+            return result;
+        }
+        
+        /**
+         * 格式化时间戳为 YYYY/MM/DD HH:MM:SS 字符串。
+         * @param {number} timestamp - 毫秒时间戳。
+         * @returns {string} 格式化后的日期时间字符串。
+         */
+        function formatDateTime(timestamp) {
+            if (timestamp === null) return 'N/A';
+            const date = new Date(timestamp);
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            const seconds = String(date.getSeconds()).padStart(2, '0');
+            return `${year}/${month}/${day} ${hours}:${minutes}:${seconds}`;
+        }
+        
+        /**
+         * 启动或重启实时计时器。
+         */
+        function startTimer() {
+            // 先清除任何现有的计时器
+            if (timerInterval) {
+                clearInterval(timerInterval);
+            }
+            
+            if (startTime !== null) {
+                // 立即更新一次显示
+                updateTimerDisplay();
+                // 每秒更新一次显示
+                timerInterval = setInterval(updateTimerDisplay, 1000);
+            } else {
+                // 如果没有开始时间，则显示未开始
+                document.getElementById('timerDisplay').textContent = "游戏状态: 未开始";
+            }
+        }
+        
+        /**
+         * 计算并更新计时器显示。
+         */
+        function updateTimerDisplay() {
+            if (startTime === null) {
+                // 如果计时被停止，确保显示正确的初始状态
+                document.getElementById('timerDisplay').textContent = "游戏状态: 未开始";
+                clearInterval(timerInterval);
+                timerInterval = null;
+                return;
+            }
+            
+            const durationMs = Date.now() - startTime;
+            const duration = formatDuration(durationMs);
+            document.getElementById('timerDisplay').textContent = `已持续计时: ${duration}`;
+        }
 
 
         /**
@@ -111,10 +208,8 @@
             const scoreElement = document.getElementById(`player${player}Score`);
             const currentScore = player === 1 ? score1 : score2;
             
-            // 更新分数文本
             scoreElement.textContent = currentScore;
-
-            // 添加动画效果 (短暂放大/缩小)
+            // 添加一个微小的动画效果
             scoreElement.classList.add('scale-105');
             setTimeout(() => {
                 scoreElement.classList.remove('scale-105');
@@ -126,21 +221,18 @@
          */
         function updateLogDisplay() {
             const logContainer = document.getElementById('logContainer');
-            
-            // 确保名称是最新的，并在记录中添加队伍信息
             const name1 = document.getElementById('player1Name').value;
             const name2 = document.getElementById('player2Name').value;
 
-            // 合并并格式化两条日志，然后按时间降序排序（最新的在前）
+            // 合并并按时间戳降序排列 (最新的在最上面)
             const combinedLog = [
                 ...log1.map(item => ({ ...item, player: 1, name: name1, color: 'text-blue-600' })),
                 ...log2.map(item => ({ ...item, player: 2, name: name2, color: 'text-red-600' }))
             ].sort((a, b) => {
-                // 简单的基于时间戳的排序
                 return a.timestamp - b.timestamp;
-            }).reverse(); // 倒序显示，最新在前
+            }).reverse();
             
-            // 只显示最近 15 条记录
+            // 只显示最近的 15 条记录
             const recentLog = combinedLog.slice(0, 15);
 
             let logHtml = `<h2 class="text-xl font-bold text-gray-700 mb-4 text-center">最近 ${recentLog.length} 条得分记录</h2>`;
@@ -159,7 +251,6 @@
                             <span class="text-sm font-medium text-gray-500 w-1/4 md:w-auto">${entry.time}</span>
                             <span class="${entry.color} font-bold w-1/4 md:w-auto truncate">${entry.name}</span>
                             <span class="${colorClass} font-semibold w-1/4 text-right">${action} ${amountText}</span>
-                            <!-- 更新：显示完整的比分 -->
                             <span class="text-sm text-gray-700 w-1/4 text-right">比分: ${entry.scoreA} - ${entry.scoreB}</span>
                         </li>
                     `;
@@ -171,22 +262,27 @@
         }
 
         /**
-         * 保存当前分数和日志到 localStorage。
+         * 保存当前状态到 localStorage。
          */
         function saveState() {
             try {
                 localStorage.setItem(STORAGE_KEY_SCORE1, score1);
                 localStorage.setItem(STORAGE_KEY_SCORE2, score2);
-                // 日志数组需要先转换为 JSON 字符串才能保存
                 localStorage.setItem(STORAGE_KEY_LOG1, JSON.stringify(log1));
                 localStorage.setItem(STORAGE_KEY_LOG2, JSON.stringify(log2));
+                // 保存开始时间
+                if (startTime !== null) {
+                    localStorage.setItem(STORAGE_KEY_START_TIME, startTime);
+                } else {
+                    localStorage.removeItem(STORAGE_KEY_START_TIME);
+                }
             } catch (e) {
                 console.error("Failed to save state to localStorage:", e);
             }
         }
 
         /**
-         * 从 localStorage 加载分数和日志。
+         * 从 localStorage 加载状态。
          */
         function loadState() {
             try {
@@ -194,28 +290,25 @@
                 const storedScore2 = localStorage.getItem(STORAGE_KEY_SCORE2);
                 const storedLog1 = localStorage.getItem(STORAGE_KEY_LOG1);
                 const storedLog2 = localStorage.getItem(STORAGE_KEY_LOG2);
+                const storedStartTime = localStorage.getItem(STORAGE_KEY_START_TIME);
 
-                if (storedScore1 !== null) {
-                    // 使用 parseInt 和 || 0 确保即使存储失败也是数字 0
-                    score1 = parseInt(storedScore1, 10) || 0;
-                }
-                if (storedScore2 !== null) {
-                    score2 = parseInt(storedScore2, 10) || 0;
-                }
-                if (storedLog1 !== null) {
-                    // 将 JSON 字符串解析回数组
-                    log1 = JSON.parse(storedLog1) || [];
-                }
-                if (storedLog2 !== null) {
-                    log2 = JSON.parse(storedLog2) || [];
+                if (storedScore1 !== null) score1 = parseInt(storedScore1, 10) || 0;
+                if (storedScore2 !== null) score2 = parseInt(storedScore2, 10) || 0;
+                if (storedLog1 !== null) log1 = JSON.parse(storedLog1) || [];
+                if (storedLog2 !== null) log2 = JSON.parse(storedLog2) || [];
+                // 加载开始时间
+                if (storedStartTime !== null) {
+                    startTime = parseInt(storedStartTime, 10);
+                } else {
+                    startTime = null; 
                 }
             } catch (e) {
                 console.error("Failed to load state from localStorage, resetting to default:", e);
-                // 加载失败时重置所有变量
                 score1 = 0;
                 score2 = 0;
                 log1 = [];
                 log2 = [];
+                startTime = null;
             }
         }
 
@@ -227,19 +320,28 @@
          */
         function changeScore(player, amount) {
             const now = new Date();
+            const wasStartTimeNull = (startTime === null);
+
+            // 如果 startTime 为空，则设置当前时间为游戏开始时间
+            if (wasStartTimeNull) {
+                startTime = now.getTime();
+            }
+
             // 格式化时间为 HH:MM:SS
             const timeString = now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
             
             if (player === 1) {
                 score1 += amount;
                 if (score1 < 0) score1 = 0; // 防止负分
-                // 更新日志结构：记录两队最终分数
                 log1.push({ time: timeString, amount: amount, scoreA: score1, scoreB: score2, timestamp: now.getTime() });
             } else if (player === 2) {
                 score2 += amount;
                 if (score2 < 0) score2 = 0; // 防止负分
-                // 更新日志结构：记录两队最终分数
                 log2.push({ time: timeString, amount: amount, scoreA: score1, scoreB: score2, timestamp: now.getTime() });
+            }
+            
+            if (wasStartTimeNull) {
+                startTimer(); // 如果是第一次操作，启动计时器
             }
 
             updateScoreDisplay(player);
@@ -266,9 +368,34 @@
             ].sort((a, b) => a.timestamp - b.timestamp); 
 
             // --- PLAIN TEXT EXPORT LOGIC ---
-            const now = new Date();
-            const fullDateStr = now.toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' });
+            const nowTime = Date.now();
+            
+            // 格式化开始和结束日期
+            const dateFormatOptions = { year: 'numeric', month: '2-digit', day: '2-digit' };
+            const startDateStr = startTime ? new Date(startTime).toLocaleDateString('zh-CN', dateFormatOptions) : 'N/A';
+            const endDateStr = new Date(nowTime).toLocaleDateString('zh-CN', dateFormatOptions);
 
+            // 确定标题日期范围：如果跨天，显示 "开始日期 - 结束日期"
+            let titleDateRange = endDateStr;
+            if (startTime && startDateStr !== endDateStr) {
+                titleDateRange = `${startDateStr} - ${endDateStr}`;
+            } else if (startTime) {
+                 // 同一天，只显示开始日期
+                titleDateRange = startDateStr;
+            }
+
+            // 计算并格式化总时长
+            let durationString = 'N/A';
+            if (startTime !== null) {
+                const durationMs = nowTime - startTime;
+                durationString = formatDuration(durationMs);
+            }
+            
+            // 获取精确的开始和结束时间
+            const startDateTimeStr = startTime !== null ? formatDateTime(startTime) : 'N/A (无记录)';
+            const endDateTimeStr = formatDateTime(nowTime);
+
+            
             // 定义列宽 (基于标准空格字符数，方便对齐)
             const W_IDX = 5;
             const W_TIME = 8;
@@ -278,8 +405,11 @@
             const SEPARATOR = " | ";
             
             // 纯文本文件头
-            let textContent = `比赛得分记录 - ${fullDateStr}\n`;
+            let textContent = `比赛得分记录 - ${titleDateRange}\n`; // 使用新的日期范围标题
             textContent += `队伍 A: ${name1}\n队伍 B: ${name2}\n`;
+            textContent += `开始时间: ${startDateTimeStr}\n`; // 新增开始时间
+            textContent += `结束时间: ${endDateTimeStr}\n`; // 新增结束时间
+            textContent += `计时时长: ${durationString}\n`; // 在头部添加总计时
             textContent += "====================================================================\n\n";
 
             // Header row: 使用 padEnd 实现左对齐
@@ -328,8 +458,8 @@
             
             link.setAttribute("href", url);
             
-            // File name: ScoreLog-YYYYMMDD.txt
-            const dateStr = now.toISOString().slice(0, 10).replace(/-/g, '');
+            // File name: ScoreLog-YYYYMMDD.txt (以导出时的日期命名)
+            const dateStr = new Date(nowTime).toISOString().slice(0, 10).replace(/-/g, '');
             link.setAttribute("download", `ScoreLog-${dateStr}.txt`);
             
             // 隐藏链接并点击触发下载
@@ -347,31 +477,36 @@
         function resetGame() {
             score1 = 0;
             score2 = 0;
-            log1 = []; // 清空日志
-            log2 = []; // 清空日志
+            log1 = []; 
+            log2 = []; 
+            startTime = Date.now(); // 重置游戏时，重新设置开始时间
 
             // 清除 localStorage 中的数据，实现彻底重置
             localStorage.removeItem(STORAGE_KEY_SCORE1);
             localStorage.removeItem(STORAGE_KEY_SCORE2);
             localStorage.removeItem(STORAGE_KEY_LOG1);
             localStorage.removeItem(STORAGE_KEY_LOG2);
+            
+            // 确保保存新的 startTime
+            saveState();
 
             updateScoreDisplay(1);
             updateScoreDisplay(2);
             updateLogDisplay(); // 更新日志视图
+            
+            // 启动或重启计时器
+            startTimer();
             
             // 重置名称
             document.getElementById('player1Name').value = '队伍 A';
             document.getElementById('player2Name').value = '队伍 B';
 
             // 弹出提示框 (使用自定义的简单提示代替alert)
-            showCustomMessage("游戏已重置！", "bg-yellow-100 border-yellow-500 text-yellow-700");
+            showCustomMessage("游戏已重置，计时已重新开始！", "bg-yellow-100 border-yellow-500 text-yellow-700");
         }
 
         /**
          * 显示一个自定义的短暂提示信息，代替 alert()。
-         * @param {string} message - 要显示的消息。
-         * @param {string} tailwindClasses - 提示框的 Tailwind 样式类。
          */
         function showCustomMessage(message, tailwindClasses) {
             let messageBox = document.getElementById('customMessageBox');
@@ -385,11 +520,9 @@
             messageBox.className = `fixed top-4 left-1/2 transform -translate-x-1/2 z-50 p-4 rounded-xl shadow-2xl transition-opacity duration-300 ${tailwindClasses}`;
             messageBox.textContent = message;
             
-            // 立即显示
             messageBox.classList.remove('opacity-0');
             messageBox.classList.add('opacity-100');
 
-            // 3秒后隐藏
             setTimeout(() => {
                 messageBox.classList.remove('opacity-100');
                 messageBox.classList.add('opacity-0');
@@ -402,6 +535,9 @@
             updateScoreDisplay(1); // 2. 更新分数显示
             updateScoreDisplay(2);
             updateLogDisplay(); // 3. 更新日志区域
+            
+            // 4. 启动动态计时器（如果计时已开始）
+            startTimer();
         };
     </script>
 </body>
